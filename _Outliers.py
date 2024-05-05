@@ -44,9 +44,9 @@ def compare_values(row, l, col):
         return 0
     
 # input file path
-path = os.path.join(os.path.dirname(__file__), '', 'WaterBudget_dataset/')
-filePath = path+"output/"
-outPath = path + "output_bccClassify1/"
+path = os.path.join(os.path.dirname(__file__), '', 'WaterBudget_online/')
+filePath = path+"3BasinsComparison/"
+outPath = path + "3BasinsComparison_output/"
 test = False
 
 # traverse input files
