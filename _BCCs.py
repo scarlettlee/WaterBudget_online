@@ -95,10 +95,6 @@ def getUncertCoefR(x,index):
     return 0.023 + (0.288 - 0.023) * (x.max() - x[index]) / (x.max() - x.min())
 
 test = False
-# pth = os.path.join(os.path.dirname(__file__), '', 'data/')
-# # all basins 
-# pth = os.path.join(os.path.dirname(__file__), '', 'dataTWSC/')
-# output_dir = os.path.join(os.path.dirname(__file__), '', 'output/')
 # # 3 test basins 
 pth = os.path.join(os.path.dirname(__file__), '', 'dataTWSC_test/')
 output_dir = os.path.join(os.path.dirname(__file__), '', 'output_test/')
