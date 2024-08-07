@@ -43,10 +43,11 @@ def compute_stats(true_values, corrected_values):
 # Define paths and folders
 csv_folder = os.path.join(os.path.dirname(__file__), '', '')
 xlsx_file = csv_folder+"3BasinsComparison/stationsPrecipitation.xlsx"
-output_folder = os.path.join(os.path.dirname(__file__), '', 'redistribution_comparison/')
+output_folder = os.path.join(os.path.dirname(__file__), '', 'stats/')#'redistribution_comparison/')
+ind = '1'
 
 # Find CSV files
-csv_files = find_pattern("*.csv", csv_folder+'redistribution_outliers/')
+csv_files = find_pattern("*.csv", csv_folder+'redistribution_outliers1/')
 
 # Read Excel file
 excel_data = pd.read_excel(xlsx_file, dtype=float)
@@ -69,7 +70,7 @@ for csv_file in csv_files:
                  'P': 'P_Merge'}, inplace=True)
     # Extract required columns from CSV data
     required_columns = ['P_Merge', 'Pre_GPCC', 'Pre_GPCP', 'Pre_Gsmap', 'Pre_IMERG', 'Pre_PERSIANN_CDR']
-    required_columns += [col for col in csv_data.columns if col.endswith('_P_1')]
+    required_columns += [col for col in csv_data.columns if col.endswith('_P_'+ind)]
     
     # Get corresponding columns from Excel data
     if file_name in excel_data.columns:
@@ -109,7 +110,7 @@ for csv_file in csv_files:
         columns={'E1': 'ET_FLUXCOM', 'E2': 'ET_GLDAS', 'E3': 'ET_GLEAM', 'E4': 'ET_PT-JPL'}, inplace=True)
     # Extract required columns from CSV data
     required_columns = ['ET_FLUXCOM', 'ET_GLDAS', 'ET_GLEAM', 'ET_PT-JPL']
-    required_columns += [col for col in csv_data.columns if col.endswith('_E_1')]
+    required_columns += [col for col in csv_data.columns if col.endswith('_E_'+ind)]
     
     df_stats = pd.DataFrame(columns=['Basin', 'Combination', 'PBIAS', 'CC', 'RMSE', 'ME', 'ME1', 'MAE', 'MAPE'])
     
@@ -142,7 +143,7 @@ for csv_file in csv_files:
                  'S4': 'TWSC_GRACE_Mascon_JPL'}, inplace=True)
     # Extract required columns from CSV data
     required_columns = ['TWSC_GRACE_CSR', 'TWSC_GRACE_GFZ', 'TWSC_GRACE_JPL', 'TWSC_GRACE_Mascon_JPL']
-    required_columns += [col for col in csv_data.columns if col.endswith('_S_1')]
+    required_columns += [col for col in csv_data.columns if col.endswith('_S_'+ind)]
 
     df_stats = pd.DataFrame(columns=['Basin', 'Combination', 'PBIAS', 'CC', 'RMSE', 'ME', 'ME1', 'MAE', 'MAPE'])
 
@@ -169,5 +170,5 @@ for csv_file in csv_files:
     # ***************************** TWSC ***************************    
 
 # print(df_statsAll)
-output_csv = os.path.join(output_folder, 'comparison_allBasins_r1.csv')
+output_csv = os.path.join(output_folder, 'comparison_allBasins_r'+ind+'.csv')
 df_statsAll.to_csv(output_csv, index=False)

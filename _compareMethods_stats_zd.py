@@ -41,12 +41,18 @@ def compute_stats(true_values, corrected_values):
     return pbias, cc, rmse, me, me1, mae, mape
 
 # Define paths and folders
-csv_folder = os.path.join(os.path.dirname(__file__), '', '3BasinsComparison/')
-xlsx_file = csv_folder+"stationsPrecipitation.xlsx"
-output_folder = os.path.join(os.path.dirname(__file__), '', '3BasinsComparison_output/')
+# csv_folder = os.path.join(os.path.dirname(__file__), '', '3BasinsComparison/')
+# csv_folder = os.path.join(os.path.dirname(__file__), '', '3BasinsComparison_mergeClosed/')
+csv_folder = os.path.join(os.path.dirname(__file__), '', '')
+xlsx_file = csv_folder+"3BasinsComparison/stationsPrecipitation.xlsx"
+# output_folder = os.path.join(os.path.dirname(__file__), '', '3BasinsComparison_output/')
+# output_folder = os.path.join(os.path.dirname(__file__), '', 'stats_mergedClosed/')
+output_folder = os.path.join(os.path.dirname(__file__), '', 'stats_mergedClosed_partTrue/')
+
 
 # Find CSV files
-csv_files = find_pattern("*.csv", csv_folder)
+# csv_files = find_pattern("*.csv", csv_folder+'redistribution_outliers_mergeClosed/')
+csv_files = find_pattern("*.csv", csv_folder+'redistribution_outliers_mergeClosed_partTrue/')
 
 # Read Excel file
 excel_data = pd.read_excel(xlsx_file, dtype=float)
@@ -114,7 +120,7 @@ for csv_file in csv_files:
     df_stats = pd.DataFrame(columns=['Basin', 'Combination', 'PBIAS', 'CC', 'RMSE', 'ME', 'ME1', 'MAE', 'MAPE'])
     
     for csv_column in required_columns:
-        pbias, cc, rmse, me, me1, mae, mape = compute_stats(csv_data['E'], csv_data[csv_column])
+        pbias, cc, rmse, me, me1, mae, mape = compute_stats(csv_data['E_closed'], csv_data[csv_column])
 
         # Append statistics to DataFrame
         new_row = pd.DataFrame([{'Basin': file_name, 'Combination': csv_column, 'PBIAS': pbias, 'CC': cc, 
@@ -147,7 +153,7 @@ for csv_file in csv_files:
     df_stats = pd.DataFrame(columns=['Basin', 'Combination', 'PBIAS', 'CC', 'RMSE', 'ME', 'ME1', 'MAE', 'MAPE'])
 
     for csv_column in required_columns:
-        pbias, cc, rmse, me, me1, mae, mape = compute_stats(csv_data['S'], csv_data[csv_column])
+        pbias, cc, rmse, me, me1, mae, mape = compute_stats(csv_data['S_closed'], csv_data[csv_column])
 
         # Append statistics to DataFrame
         new_row = pd.DataFrame([{'Basin': file_name, 'Combination': csv_column, 'PBIAS': pbias, 'CC': cc, 

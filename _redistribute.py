@@ -26,10 +26,23 @@ def getUncertCoefR(x,index):
     # R 0.023(highest value with lowest uncertainty percent)-0.288(lowest value with highest percent)
     return 0.023 + (0.288 - 0.023) * (x.max() - x[index]) / (x.max() - x.min())
 
+def get_first_single_digit_number(s):
+    match = re.search(r'\d{4}', s)
+    if match:
+        return match.group()
+    else:
+        return None
+
+def digit_by_position(digit_string, position):
+    # Getting the digit at the given position (1-based)
+    if position <= len(digit_string):
+        return digit_string[position - 1]
+    return None
+
 # The function checks the values of a and b and returns different values based on the conditions
-def compute_newR(row, l, col): # P and PR_####_P
-    a = row[l] 
-    b = row[col]   
+def compute_newR1(row, l, col): # P and PR_####_P
+    a = row[l] # the reference to be compared with
+    b = row[col]   # the BCC result
     
     # Check if b is null
     if pd.isnull(b) or b == -9999.0:    
@@ -54,11 +67,32 @@ def compute_newR(row, l, col): # P and PR_####_P
     
     return row
 
+overAdjustPerc = 0.2
+def compute_newR2(row, l, col): # E_P# and PR_####_P_r
+    a = row[l] 
+    b = row[col]    
+
+    # Check if b is null
+    if pd.isnull(b) or b == -9999.0:    
+        row[col+'2'] = np.nan
+    elif abs(b) > (1+overAdjustPerc)*a:
+        row[col+'2'] = b - (1+overAdjustPerc)*a
+        # if it is precipitation, reverse its sign
+        if col.endswith('P'):
+            row[col+'2'] = -row[col+'2']
+        row[col[:-2]+'_2'] = row[col[:-2]] - row[col+'2']
+        # print('col: ', col, col+'2', col[:-3]+'_2')
+    else:
+        row[col+'2'] = 0
+
+    return row
+
 # the function redistributes PR_####_P_r1 to PR_####_P, and get new PR_####_P_1
 # as long as all values of r1 is not null, it will be redistributed according to weights columns (PR_####_P_w)
-def redistributeR1(row,filtered):
+# update: include both r1 and r2
+def redistributeR1(row,filtered, index):
     # get all columns with r1
-    r1_columns = [col for col in filtered if col.endswith('_r1')]
+    r1_columns = [col for col in filtered if col.endswith('_r'+index)]
 
     # check if all r1 values are 0
     all_r1_null = all(np.isnan(row[col]) for col in r1_columns)
@@ -83,18 +117,17 @@ def redistributeR1(row,filtered):
         if sumWeights != 0:
             for col in cols_to_update:
                 if col.endswith('P'):
-                    row[col+'_1'] = row[col]-sum_r1 * row[col + '_w'] / sumWeights
+                    row[col+'_'+index] = row[col]-sum_r1 * row[col + '_w'] / sumWeights
                 else:
-                    row[col+'_1'] = row[col]+sum_r1 * row[col + '_w'] / sumWeights
+                    row[col+'_'+index] = row[col]+sum_r1 * row[col + '_w'] / sumWeights
 
     return row
 
 # input file path
 path = os.path.join(os.path.dirname(__file__), '', '')
 filePath = path+"3BasinsComparison/"
-print(filePath)
-outPath = path + "redistribution_outliers/"
-overAdjustPerc = 0.2
+# print(filePath)
+outPath = path + "redistribution_outliers1/"
 test = False
 
 # traverse input files
@@ -128,37 +161,66 @@ for fl in fileList:
     # print('exhaustCompnents',exhaustCompnents)
     Combinations = [a+b+'1'+c for a in exhaustCompnents[0] for b in exhaustCompnents[1] for c in exhaustCompnents[2]]
     # add r' columns and for each outlier component
+    # add r'' columns and for each extreme component
     for combin in Combinations:
         for l in lab:
             for m in met:
                 data[m + '_' + combin + '_' + l + '_r1'] = -9999.0 
+                data[m + '_' + combin + '_' + l + '_r2'] = -9999.0 
                 data[m + '_' + combin + '_' + l + '_1'] = data[m + '_' + combin + '_' + l] 
+                data[m + '_' + combin + '_' + l + '_2'] = data[m + '_' + combin + '_' + l] 
     columns =data.columns
-    # print(data.columns)
+    # print(data.columns.to_list())
 
     # Compute r1 (outliers)
-    for l in lab:        #['P', 'E', 'R', 'S']
-        for m in met:    #['PR', 'CKF', 'MCL', 'MSD']    
+    # Compute r2 (extremes)
+    for l in lab:        #['P', 'E', 'R', 'S']['P']:#
+        for m in met:    #['PR', 'CKF', 'MCL', 'MSD']    ['PR']:#
             r = re.compile(m+"_\d{4}_"+l+"$") # PR_####_P
             filtered = list(filter(r.match, columns))
 
             for col in filtered:
                 # compare each row with merged true value
-                data = data.apply(lambda row: compute_newR(row, l, col), axis=1) 
-            
+                data = data.apply(lambda row: compute_newR1(row, l, col), axis=1)  # P and PR_####_P
+                # compare each row with error limit
+                # data = data.apply(lambda row: compute_newR2(row, 'E_'+l+col, col+'_r'), axis=1)  # E_P# and PR_####_P_r
+
+                # Extract the 4-digit number from the column
+                col_number = get_first_single_digit_number(col)
+                if col_number:
+                    # Determine the digit based on the letter
+                    if l == 'P':
+                        digit = digit_by_position(col_number, 1)
+                    elif l == 'E':
+                        digit = digit_by_position(col_number, 2)
+                    elif l == 'R':
+                        digit = digit_by_position(col_number, 3)
+                    elif l == 'S':
+                        digit = digit_by_position(col_number, 4)
+                    else:
+                        digit = None
+
+                    if digit is not None:
+                        col_e = f'E_{l}{digit}'
+                        data = data.apply(lambda row: compute_newR2(row, col_e, col + '_r'), axis=1)  # E_P#, and PR_####_P_r
+    # print(data.columns.to_list())
+
     # redistribute r1 for each BCC and composition
     # for combin in ['5414']:#Combinations: 
     #     for m in ['MSD']:#met: # PR_####
     for combin in Combinations: 
         for m in met: # PR_####
-            r = re.compile(m+"_"+combin+"_[PERS]") # PR_1111_P/E/R/S + null/_w/_r/_r1/_1 (20 columns in total)
+            r = re.compile(m+"_"+combin+"_[PERS]") # PR_1111_P/E/R/S + null/_w/_r/_r1/r2/_1 (24 columns in total)
             filtered = list(filter(r.match, columns))
             # print(filtered)
 
-            data = data.apply(lambda row: redistributeR1(row,filtered), axis=1)
+            # redistribute r1
+            data = data.apply(lambda row: redistributeR1(row,filtered,'1'), axis=1)
+            # redistribute r2
+            data = data.apply(lambda row: redistributeR1(row,filtered,'2'), axis=1)
 
     if test:
-        data.to_csv(outPath+fn+"_test.csv",index=False)
+        data.to_csv(outPath+fn+"_test21.csv",index=False)
     else:
         data.to_csv(outPath+fn+".csv",index=False)
 
