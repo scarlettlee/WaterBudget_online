@@ -5,27 +5,14 @@ import re
 import numpy as np
 from itertools import combinations
 from math import comb
+from globVar import find_pattern, get_file_name 
+
 from warnings import simplefilter
 simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
 # pd.set_option('display.max_columns', None)
 # pd.set_option('display.max_rows', None)
 pd.options.mode.chained_assignment = None
 
-# match a pattern:
-# find('*.txt', '/path/to/dir')
-def find_pattern(pattern, path):
-    result = []
-    for root, dirs, files in os.walk(path):
-        for name in files:
-            if fnmatch.fnmatch(name, pattern):
-                result.append(os.path.join(root, name))
-    return result
-
-def get_file_name(path_string):
-    pattern = re.compile(r'([^<>/\\\|:""\*\?]+)\.\w+$')
-    data = pattern.findall(path_string)
-    if data:
-        return data[0]
 
 # # compute merged true values
 # def getMergedTrue(arr):

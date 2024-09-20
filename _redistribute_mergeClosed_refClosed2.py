@@ -1,25 +1,11 @@
-import os, fnmatch
+import os
 import pandas as pd
 import re
 import numpy as np
+from globVar import basin3Flag, find_pattern, get_file_name 
+
 from warnings import simplefilter
 simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
-
-# match a pattern:
-# find('*.txt', '/path/to/dir')
-def find_pattern(pattern, path):
-    result = []
-    for root, dirs, files in os.walk(path):
-        for name in files:
-            if fnmatch.fnmatch(name, pattern):
-                result.append(os.path.join(root, name))
-    return result
-
-def get_file_name(path_string):
-    pattern = re.compile(r'([^<>/\\\|:""\*\?]+)\.\w+$')
-    data = pattern.findall(path_string)
-    if data:
-        return data[0]
 
 # compute uncertainty coefficient of runoff
 def getUncertCoefR(x,index):
@@ -156,13 +142,14 @@ def redistributeR1(row,filtered, index):
 
 # input file path
 path = os.path.join(os.path.dirname(__file__), '', '')
-# filePath = path+"3BasinsComparison_mergeClosed/"
-filePath = path+"3BasinsComparison_mergeClosed_partTrue/"
-# print(filePath)
-# outPath = path + "redistribution_outliers_mergeClosed/"
-outPath = path + "redistribution_outliers_mergeClosed_partTrue/"
-test = False
+if basin3Flag:
+    filePath = path+"3BasinsComparison_mergeClosed_partTrue/"
+    outPath = path + "3redistribution_outliers_mergeClosed_partTrue/"
+else:
+    filePath = path+"28BasinsComparison_mergeClosed_partTrue/"
+    outPath = path + "28redistribution_outliers_mergeClosed_partTrue/"
 
+test = False
 # traverse input files
 pattern = "*.csv"
 if test:
@@ -196,23 +183,32 @@ for fl in fileList:
     # recompute columns E_P/E/R/S# with P/E/R/S  
     # ##################################
     # For P: true value merged values
-    data['E_P1'] = abs(data['P1']-data['PP'])
-    data['E_P2'] = abs(data['P2']-data['PP'])
-    data['E_P3'] = abs(data['P3']-data['PP'])
-    data['E_P4'] = abs(data['P4']-data['PP'])
-    data['E_P5'] = abs(data['P5']-data['PP'])
+    p_columns = [col for col in data.columns if re.match(r'^P\d+$', col) ]
+    for col in p_columns:
+        data[f'E_{col}'] = abs(data[col] - data['PP'])
+    # data['E_P1'] = abs(data['P1']-data['PP'])
+    # data['E_P2'] = abs(data['P2']-data['PP'])
+    # data['E_P3'] = abs(data['P3']-data['PP'])
+    # data['E_P4'] = abs(data['P4']-data['PP'])
+    # data['E_P5'] = abs(data['P5']-data['PP'])
     # For E: E#*20%
-    data['E_E1'] = abs(data['E1']-data['EE'])
-    data['E_E2'] = abs(data['E1']-data['EE'])
-    data['E_E3'] = abs(data['E1']-data['EE'])
-    data['E_E4'] = abs(data['E1']-data['EE'])
+    e_columns = [col for col in data.columns if re.match(r'^E\d+$', col) ]
+    for col in e_columns:
+        data[f'E_{col}'] = abs(data[col] - data['EE'])
+    # data['E_E1'] = abs(data['E1']-data['EE'])
+    # data['E_E2'] = abs(data['E1']-data['EE'])
+    # data['E_E3'] = abs(data['E1']-data['EE'])
+    # data['E_E4'] = abs(data['E1']-data['EE'])
     # For R: R*7%
     data['E_R1'] = data['R1']*0.07
     # For S: true value TWSC_GRACE_Mascon_JPL_calculate
-    data['E_S1'] = abs(data['S1']-data['SS'])
-    data['E_S2'] = abs(data['S2']-data['SS'])
-    data['E_S3'] = abs(data['S3']-data['SS'])
-    data['E_S4'] = abs(data['S4']-data['SS'])
+    s_columns = [col for col in data.columns if re.match(r'^S\d+$', col) ]
+    for col in s_columns:
+        data[f'E_{col}'] = abs(data[col] - data['SS'])
+    # data['E_S1'] = abs(data['S1']-data['SS'])
+    # data['E_S2'] = abs(data['S2']-data['SS'])
+    # data['E_S3'] = abs(data['S3']-data['SS'])
+    # data['E_S4'] = abs(data['S4']-data['SS'])
 
     # match combinations and prelocate new columns
     exhaustCompnents = [] # for P,E,S [['1', '2', '3', '4', '5'], ['1', '2', '3', '4'], ['1', '2', '3', '4']]

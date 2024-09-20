@@ -1,64 +1,29 @@
 import os
-import fnmatch
 import pandas as pd
 import numpy as np
-import re
-
-# Function to find files matching a pattern in a directory
-def find_pattern(pattern, path):
-    result = []
-    for root, dirs, files in os.walk(path):
-        for name in files:
-            if fnmatch.fnmatch(name, pattern):
-                result.append(os.path.join(root, name))
-    return result
-
-
-# Function to extract file name from path
-def get_file_name(path_string):
-    pattern = re.compile(r'([^<>/\\\|:""\*\?]+)\.\w+$')
-    data = pattern.findall(path_string)
-    if data:
-        return data[0]
-
-
-# Function to compute statistics
-def compute_stats(true_values, corrected_values):
-    if corrected_values.isnull().all():
-        return np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan
-
-    data = pd.concat([true_values, corrected_values], axis=1).dropna()
-    true_values = data.iloc[:, 0]
-    corrected_values = data.iloc[:, 1]
-
-    pbias = 100 * ((true_values - corrected_values).sum()) / true_values.sum()
-    cc = true_values.corr(corrected_values)
-    rmse = ((true_values - corrected_values) ** 2).mean() ** .5
-    me = (true_values - corrected_values).mean()
-    me1 = (true_values - corrected_values.mean()).abs().mean()
-    mae = (true_values - corrected_values).abs().mean()
-    mape = 100 * ((true_values - corrected_values) / true_values).abs().mean()
-    return pbias, cc, rmse, me, me1, mae, mape
+from globVar import basin3Flag, find_pattern, get_file_name, compute_stats 
 
 # Define paths and folders
-# csv_folder = os.path.join(os.path.dirname(__file__), '', '3BasinsComparison/')
-# csv_folder = os.path.join(os.path.dirname(__file__), '', '3BasinsComparison_mergeClosed/')
 csv_folder = os.path.join(os.path.dirname(__file__), '', '')
-xlsx_file = csv_folder+"3BasinsComparison/stationsPrecipitation.xlsx"
-# output_folder = os.path.join(os.path.dirname(__file__), '', '3BasinsComparison_output/')
-# output_folder = os.path.join(os.path.dirname(__file__), '', 'stats_mergedClosed/')
-output_folder = os.path.join(os.path.dirname(__file__), '', 'stats_mergedClosed_partTrue/')
+if basin3Flag:  
+    xlsx_file = csv_folder+"3BasinsComparison - old/stationsPrecipitation.xlsx"
+    output_folder = os.path.join(os.path.dirname(__file__), '', '3stats_mergedClosed_partTrue/')
+    csv_files = find_pattern("*.csv", csv_folder+'3redistribution_outliers_mergeClosed_partTrue/')
 
+    # Read Excel file
+    excel_data = pd.read_excel(xlsx_file, dtype=float)
+    excel_data = excel_data.rename(columns={2181900: str(2181900),4127800: str(4127800),6742900: str(6742900)})
+else:
+    xlsx_file = csv_folder+"3BasinsComparison/stationsPrecipitation.xlsx"
+    output_folder = os.path.join(os.path.dirname(__file__), '', '28stats_mergedClosed_partTrue/')
+    csv_files = find_pattern("*.csv", csv_folder+'28redistribution_outliers_mergeClosed_partTrue/')
 
-# Find CSV files
-# csv_files = find_pattern("*.csv", csv_folder+'redistribution_outliers_mergeClosed/')
-csv_files = find_pattern("*.csv", csv_folder+'redistribution_outliers_mergeClosed_partTrue/')
+    # Read Excel file
+    excel_data = pd.read_excel(xlsx_file, dtype=float)
+    excel_data = excel_data.rename(columns={1159100: str(1159100), 1234150: str(1234150), 2180800: str(2180800), 2181900: str(2181900), 2909150: str(2909150), 2912600: str(2912600), 3265601: str(3265601), 3629001: str(3629001), 4103200: str(4103200), 4115201: str(4115201), 4127800: str(4127800), 4146281: str(4146281), 4146360: str(4146360), 4147703: str(4147703), 4150450: str(4150450), 4150500: str(4150500), 4152050: str(4152050), 4207900: str(4207900), 4208025: str(4208025), 4213711: str(4213711), 4214270: str(4214270), 4243151: str(4243151), 5404270: str(5404270), 6226800: str(6226800), 6340110: str(6340110), 6435060: str(6435060), 6457010: str(6457010), 6590700: str(6590700)})
 
-# Read Excel file
-excel_data = pd.read_excel(xlsx_file, dtype=float)
-excel_data = excel_data.rename(columns={2181900: str(2181900),4127800: str(4127800),6742900: str(6742900)})
-# print(excel_data.columns)
-
+# new 28 basins or not
+basins28 = not basin3Flag
 df_statsAll = pd.DataFrame(columns=['Basin', 'index', 'method', 'PBIAS', 'CC', 'RMSE', 'ME', 'ME1', 'MAE', 'MAPE'])
 # Iterate through CSV files
 for csv_file in csv_files:
@@ -70,11 +35,18 @@ for csv_file in csv_files:
     csv_data.replace([np.inf, -np.inf], np.nan, inplace=True)
 
     # ***************************** P ***************************
-    csv_data.rename(
-        columns={'P1': 'Pre_GPCC', 'P2': 'Pre_GPCP', 'P3': 'Pre_Gsmap', 'P4': 'Pre_IMERG', 'P5': 'Pre_PERSIANN_CDR',
-                 'P': 'P_Merge'}, inplace=True)
-    # Extract required columns from CSV data
-    required_columns = ['P_Merge', 'Pre_GPCC', 'Pre_GPCP', 'Pre_Gsmap', 'Pre_IMERG', 'Pre_PERSIANN_CDR']
+    if basins28:
+        csv_data.rename(
+            columns={'P1': 'P_GPCC', 'P2': 'P_GPM', 'P3': 'P_MSWEP', 'P4': 'P_PERSIANN',
+                    'P': 'P_Merge'}, inplace=True)
+        # Extract required columns from CSV data
+        required_columns = ['P_Merge', 'P_GPCC', 'P_GPM', 'P_MSWEP', 'P_PERSIANN']
+    else:
+        csv_data.rename(
+            columns={'P1': 'Pre_GPCC', 'P2': 'Pre_GPCP', 'P3': 'Pre_Gsmap', 'P4': 'Pre_IMERG', 'P5': 'Pre_PERSIANN_CDR',
+                    'P': 'P_Merge'}, inplace=True)
+        # Extract required columns from CSV data
+        required_columns = ['P_Merge', 'Pre_GPCC', 'Pre_GPCP', 'Pre_Gsmap', 'Pre_IMERG', 'Pre_PERSIANN_CDR']
     required_columns += [col for col in csv_data.columns if col.endswith('_P')]
     
     # Get corresponding columns from Excel data
@@ -111,10 +83,16 @@ for csv_file in csv_files:
     # ***************************** P ***************************
 
     # ***************************** ET ***************************
-    csv_data.rename(
-        columns={'E1': 'ET_FLUXCOM', 'E2': 'ET_GLDAS', 'E3': 'ET_GLEAM', 'E4': 'ET_PT-JPL'}, inplace=True)
-    # Extract required columns from CSV data
-    required_columns = ['ET_FLUXCOM', 'ET_GLDAS', 'ET_GLEAM', 'ET_PT-JPL']
+    if basins28:
+        csv_data.rename(
+            columns={'E1': 'ET_ERA5', 'E2': 'ET_GLEAM', 'E3': 'ET_MERRA'}, inplace=True)
+        # Extract required columns from CSV data
+        required_columns = ['ET_ERA5', 'ET_GLEAM', 'ET_MERRA']
+    else:
+        csv_data.rename(
+            columns={'E1': 'ET_FLUXCOM', 'E2': 'ET_GLDAS', 'E3': 'ET_GLEAM', 'E4': 'ET_PT-JPL'}, inplace=True)
+        # Extract required columns from CSV data
+        required_columns = ['ET_FLUXCOM', 'ET_GLDAS', 'ET_GLEAM', 'ET_PT-JPL']
     required_columns += [col for col in csv_data.columns if col.endswith('_E')]
     
     df_stats = pd.DataFrame(columns=['Basin', 'Combination', 'PBIAS', 'CC', 'RMSE', 'ME', 'ME1', 'MAE', 'MAPE'])
@@ -142,12 +120,50 @@ for csv_file in csv_files:
         df_statsAll = pd.concat([df_statsAll,new_row],ignore_index=True)
     # ***************************** ET ***************************
 
-    # ***************************** TWSC ***************************
+    # ***************************** R ***************************
     csv_data.rename(
-        columns={'S1': 'TWSC_GRACE_CSR', 'S2': 'TWSC_GRACE_GFZ', 'S3': 'TWSC_GRACE_JPL',
-                 'S4': 'TWSC_GRACE_Mascon_JPL'}, inplace=True)
+        columns={'R1': 'GRDC'}, inplace=True)
     # Extract required columns from CSV data
-    required_columns = ['TWSC_GRACE_CSR', 'TWSC_GRACE_GFZ', 'TWSC_GRACE_JPL', 'TWSC_GRACE_Mascon_JPL']
+    required_columns = ['GRDC']
+    required_columns += [col for col in csv_data.columns if col.endswith('_R')]
+    
+    df_stats = pd.DataFrame(columns=['Basin', 'Combination', 'PBIAS', 'CC', 'RMSE', 'ME', 'ME1', 'MAE', 'MAPE'])
+    
+    for csv_column in required_columns:
+        pbias, cc, rmse, me, me1, mae, mape = compute_stats(csv_data['R_closed'], csv_data[csv_column])
+
+        # Append statistics to DataFrame
+        new_row = pd.DataFrame([{'Basin': file_name, 'Combination': csv_column, 'PBIAS': pbias, 'CC': cc, 
+                        'RMSE': rmse, 'ME': me, 'ME1': me1, 'MAE': mae, 'MAPE': mape}])
+        df_stats = pd.concat([df_stats,new_row],ignore_index=True)
+    
+    # output_csv = os.path.join(output_folder, file_name + '_comparison_E.csv')
+    # df_stats.to_csv(output_csv, index=False)
+
+    # output integrated results        
+    unique_start_chars = set(col.split('_')[0] for col in required_columns)
+    unique_start_chars = list(unique_start_chars)
+    for method in unique_start_chars:
+        target_rows = [row for row in df_stats.Combination if row.startswith(method+'_')]
+        pbias, cc, rmse, me, me1, mae, mape = df_stats[df_stats.Combination.isin(target_rows)][['PBIAS', 'CC', 'RMSE', 'ME', 'ME1', 'MAE', 'MAPE']].mean()
+
+        new_row = pd.DataFrame([{'Basin': file_name, 'index':'R', 'method': method, 'PBIAS': pbias, 'CC': cc, 
+                        'RMSE': rmse, 'ME': me, 'ME1': me1, 'MAE': mae, 'MAPE': mape}])
+        df_statsAll = pd.concat([df_statsAll,new_row],ignore_index=True)
+    # ***************************** R ***************************
+
+    # ***************************** TWSC ***************************
+    if basins28:
+        csv_data.rename(
+            columns={'S1': 'GRACE_CSR', 'S2': 'GRACE_GFZ', 'S3': 'GRACE_JPL'}, inplace=True)
+        # Extract required columns from CSV data
+        required_columns = ['GRACE_CSR', 'GRACE_GFZ', 'GRACE_JPL']
+    else:
+        csv_data.rename(
+            columns={'S1': 'TWSC_GRACE_CSR', 'S2': 'TWSC_GRACE_GFZ', 'S3': 'TWSC_GRACE_JPL',
+                    'S4': 'TWSC_GRACE_Mascon_JPL'}, inplace=True)
+        # Extract required columns from CSV data
+        required_columns = ['TWSC_GRACE_CSR', 'TWSC_GRACE_GFZ', 'TWSC_GRACE_JPL', 'TWSC_GRACE_Mascon_JPL']
     required_columns += [col for col in csv_data.columns if col.endswith('_S')]
 
     df_stats = pd.DataFrame(columns=['Basin', 'Combination', 'PBIAS', 'CC', 'RMSE', 'ME', 'ME1', 'MAE', 'MAPE'])
@@ -175,5 +191,8 @@ for csv_file in csv_files:
     # ***************************** TWSC ***************************    
 
 # print(df_statsAll)
-output_csv = os.path.join(output_folder, 'comparison_allBasins.csv')
-df_statsAll.to_csv(output_csv, index=False)
+# output_csv = os.path.join(output_folder, 'comparison_allBasins.csv')
+# output_csv = os.path.join(output_folder, 'comparison_allBasins_truePIntroduced.csv')
+# print(df_statsAll.mean())
+# df_statsAll.to_csv(output_csv, index=False)
+print(df_statsAll[['PBIAS','CC','RMSE','ME','ME1','MAE','MAPE']].mean())
