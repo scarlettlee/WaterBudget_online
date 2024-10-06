@@ -3,7 +3,7 @@ import re
 import numpy as np
 import pandas as pd
 
-basin3Flag= False
+basin3Flag= True
 
 # match a pattern:
 # find('*.txt', '/path/to/dir')
