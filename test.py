@@ -1,30 +1,28 @@
-# import numpy as np
-# import pandas as pd
+import pandas as pd
 
-# # Create a NumPy array
-# numpy_array = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-# print(numpy_array)
+# Example DataFrame
+# Make sure 'date' is your datetime column and you have columns like 'AAA_BBBB_C_D'
+data = {
+    'date': pd.date_range(start='2021-01-01', periods=5, freq='D'),
+    'basin': ['A', 'A', 'A', 'B', 'C'],
+    'AAA_12_C_D': [1, 2, 3, 4, 5],
+    'ZZZ_24_X_W_1': [6, 7, 8, 9, 10]
+}
 
-# # Convert the NumPy array to a pandas DataFrame with column names
-# column_names = ['A', 'B', 'C']
-# df = pd.DataFrame(data=numpy_array, columns=column_names)
+df = pd.DataFrame(data)
+print(df)
 
-# print(df)
+# Melt the DataFrame to long format
+melted_df = pd.melt(df, id_vars=['date','basin'], var_name='variable', value_name='value')
 
-# nparr = df.to_numpy()
-# print(nparr)
+# Split the 'variable' column into 'A_type', 'B_type', 'C_type', 'D_type'
+melted_df[['A_type', 'B_type', 'C_type', 'D_type','E_type']] = melted_df['variable'].str.split('_', expand=True)
+print(melted_df)
 
-import re
+# Drop the original 'variable' column
+melted_df.drop(columns=['variable'], inplace=True)
 
-def get_first_single_digit_number(s):
-    # Search for the first occurrence of a single digit in the string
-    match = re.search(r'\d', s)
-    if match:
-        return match.group()
-    else:
-        return None  # or a default value if no digit is found
+# Reorder columns if needed
+melted_df = melted_df[['date', 'basin','A_type', 'B_type', 'C_type', 'D_type', 'value']]
 
-# Example usage
-s = "PRC_1234_P_r"
-first_single_digit = get_first_single_digit_number(s)
-print(first_single_digit)  # Output: 1 (the first single digit)
+print(melted_df)
