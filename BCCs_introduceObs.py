@@ -92,7 +92,7 @@ if basin3Flag:
     excel_data = pd.read_excel(xlsx_file, dtype=float)
     excel_data = excel_data.rename(columns={2181900: str(2181900),4127800: str(4127800),6742900: str(6742900)})
     # # 3 test basins 
-    pth = os.path.join(os.path.dirname(__file__), '', 'dataTWSC_test/')
+    pth = os.path.join(os.path.dirname(__file__), '', '3data_basin/')
     output_dir = os.path.join(os.path.dirname(__file__), '', '3BasinsComparison_obsIntroduced/')
 else:
     # read observed precipitation

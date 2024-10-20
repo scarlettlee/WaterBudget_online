@@ -1,1 +1,12 @@
-vis/4.2-3Basins.csv
+results visualization/4.2-3Basins.csv
+old python files/_BCCs.py
+old python files/_CloseMergedComponents.py
+old python files/_compareMethods_stats_redistributed.py
+old python files/_compareMethods_stats_redistributed1.py
+old python files/_compareMethods_stats_zd.py
+old python files/_Outliers.py
+old python files/_OverlyAdjustment.py
+old python files/_recomputeAll.py
+old python files/_recomputeTWSC.py
+old python files/_redistribute_mergeClosed.py
+old python files/_redistribute.py
