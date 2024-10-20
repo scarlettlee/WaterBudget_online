@@ -10,10 +10,8 @@ from globVar import basin3Flag, find_pattern, get_file_name, compute_stats
 # Define paths and folders
 csv_folder = os.path.join(os.path.dirname(__file__), '', '')
 if basin3Flag:  
-    output_folder = os.path.join(os.path.dirname(__file__), '', '3stats_mergedClosed_partTrue/')
     csv_files = find_pattern("*.csv", csv_folder+'3redistribution_outliers_mergeClosed_partTrue/')
 else:
-    output_folder = os.path.join(os.path.dirname(__file__), '', '28stats_mergedClosed_partTrue/')
     csv_files = find_pattern("*.csv", csv_folder+'28redistribution_outliers_mergeClosed_partTrue/')
 
 # new 28 basins or not
