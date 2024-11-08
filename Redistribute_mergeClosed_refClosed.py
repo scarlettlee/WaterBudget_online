@@ -53,20 +53,20 @@ def sign(x):
     return 0
   
 # The function checks the values of a and b and returns different values based on the conditions
-def compute_newR1(row, l, col): # P and PR_####_P
-    a = row[l] # the reference to be compared with
+def compute_newR1(row, l, col): # P and PR_####_P  
+    a = row[l] # the reference to be compared with P#
     b = row[col]   # the BCC result
     
     # Check if b is null
     if pd.isnull(b) or b == -9999.0:    
         row[col+'_r1'] = np.nan
-    # Check if a is positive and b is greater than twice of a # Check if a is negative and b is less than twice of a
-    elif (a > 0 and b > 2 * a) | (a < 0 and b < 2 * a):
-        row[col+'_r1'] = b - 2 * a    
-        # if it is precipitation, reverse its sign
-        if col.endswith('P'):
-            row[col+'_r1'] = -row[col+'_r1']
-        row[col+'_1'] = row[col] - row[col+'_r1']
+    # # Check if a is positive and b is greater than twice of a # Check if a is negative and b is less than twice of a
+    # elif (a > 0 and b > 2 * a) | (a < 0 and b < 2 * a):
+    #     row[col+'_r1'] = b - 2 * a    
+    #     # if it is precipitation, reverse its sign
+    #     if col.endswith('P'):
+    #         row[col+'_r1'] = -row[col+'_r1']
+    #     row[col+'_1'] = row[col] - row[col+'_r1']
     # Check if a is negative and b is positive
     elif (a < 0 and b > 0) | ( a > 0 and b < 0):
         row[col+'_r1'] = b
@@ -107,7 +107,7 @@ def compute_newR2(row, l, col): # E_P# and PR_####_P_r
 # the function redistributes PR_####_P_r1 to PR_####_P, and get new PR_####_P_1
 # as long as all values of r1 is not null, it will be redistributed according to weights columns (PR_####_P_w)
 # update: include both r1 and r2
-def redistributeR1(row,filtered, index):
+def redistributeR(row,filtered, index):
     # get all columns with r1
     r1_columns = [col for col in filtered if col.endswith('_r'+index)]
 
@@ -240,7 +240,7 @@ for fl in fileList:
 
             for col in filtered:#['MSD_5414_P']:#
                 # compare each row with merged true value
-                data = data.apply(lambda row: compute_newR1(row, l+l, col), axis=1)  # P and PR_####_P
+                data = data.apply(lambda row: compute_newR1(row, l+l, col), axis=1)  # P and PR_####_P  
 
                 # Extract the 4-digit number from the column
                 col_number = get_first_single_digit_number(col)
@@ -272,9 +272,9 @@ for fl in fileList:
             # print(filtered)
 
             # redistribute r1
-            data = data.apply(lambda row: redistributeR1(row,filtered,'1'), axis=1)
+            data = data.apply(lambda row: redistributeR(row,filtered,'1'), axis=1)
             # redistribute r2
-            data = data.apply(lambda row: redistributeR1(row,filtered,'2'), axis=1)
+            data = data.apply(lambda row: redistributeR(row,filtered,'2'), axis=1)
 
     if test:
         data.to_csv(outPath+fn+"_test3.csv",index=False)
