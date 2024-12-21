@@ -14,7 +14,7 @@ BCCs_introduceObs.py | BCC methods with observations introduced as reference dat
 CloseMergedComponents_partTrue.py | Compute closed components as reference values | *stationsPrecipitation.xlsx* and *BasinsComparison_obsIntroduced* | *BasinsComparison_mergeClosed_partTrue*
 Redistribute_mergeClosed_refClosed.py | Compute outliers and overlyAdjusted values, and then redistribute the residual | *BasinsComparison_mergeClosed_partTrue* | *redistribution_outliers_mergeClosed_partTrue*
 CompareMethods_..._mergeClosed.py | Compute statistical indicators RMSE, Correlation Coefficient (CC), PBIAS, etc. | *redistribution_outliers_mergeClosed_partTrue* | *stats_mergedClosed_partTrue*
-`pics 4 debug`, `output_test`, `results visualization`,`test`,`_old files and folders` | assistant folders | - | -
+`output_test`, `test`,`_old files and folders` | assistant folders | - | -
 
 ## Introduction of visualization python files for results:
 File | Results Section | Input | Output
@@ -22,3 +22,8 @@ File | Results Section | Input | Output
 vis1_percentage.py | 4.1 Percentage of ourliers and overlyAdjusted values for each component | *redistribution_outliers_mergeClosed_partTrue* | *results visualization*
 vis2_accuracyImprove.py | 4.2 Accuracy comparison based on our proposed method | *redistribution_outliers_mergeClosed_partTrue* | *results visualization*
 vis4_synthetic.py | 4.4 Synthetic experiments | - | -
+
+
+## Others:
+`_testOld.py` are the experiments for examining the negative outliers.
+The corresponding folders are "28BasinsComparison - output", "28BasinsComparison - output", and "extracted_withoutCDR_output"

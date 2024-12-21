@@ -2,7 +2,7 @@ import os, fnmatch
 import pandas as pd
 import re
 import numpy as np
-from globVar import basin3Flag,  find_pattern, get_file_name
+from globVar import basin3Flag,  obsIntroduced, find_pattern, get_file_name
 
 def redistribute_ET(row):
     tempE = row['P_closed'] - row['R_closed'] - row['S_closed']
@@ -17,7 +17,10 @@ path = os.path.join(os.path.dirname(__file__), '', '/')
 csv_folder = os.path.join(os.path.dirname(__file__), '', '')
 if basin3Flag:
     xlsx_file = csv_folder+"3BasinsComparison - old/stationsPrecipitation.xlsx"
-    filePath = os.path.join(os.path.dirname(__file__), '', '3BasinsComparison_obsIntroduced/')
+    if obsIntroduced:
+        filePath = os.path.join(os.path.dirname(__file__), '', '3BasinsComparison/')
+    else:
+        filePath = os.path.join(os.path.dirname(__file__), '', '3BasinsComparison_obsIntroduced/')
     outPath = os.path.join(os.path.dirname(__file__), '', '3BasinsComparison_mergeClosed_partTrue/')
 
     # Read Excel file

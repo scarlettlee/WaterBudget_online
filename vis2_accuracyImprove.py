@@ -126,11 +126,11 @@ for i, component in enumerate(components):  # Iterate over each component
                 rmse = mean_squared_error(method_subset[f'{component}_closed'], method_subset['value'], squared=False)
                 rmse_values.append(f"{method}: {rmse:.2f}")
         
-        # Add legend only to the last subplot in each row
-        if i != 0 or j != 0:
-            ax.get_legend().remove()
-        else:
-            ax.legend(loc='lower right', bbox_to_anchor=(1, 0))
+        # # Add legend only to the last subplot in each row
+        # if i != 0 or j != 0:
+        #     ax.get_legend().remove()
+        # else:
+        #     ax.legend(loc='lower right', bbox_to_anchor=(1, 0))
 
         ax.set_title(f'{component} (Abnormal: {abnormal})')
         ax.text(0.05, 0.95, "\n".join(rmse_values), transform=ax.transAxes, fontsize=10,

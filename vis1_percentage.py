@@ -57,6 +57,7 @@ for fl in fileList:
                 count_greater_than_zero = (concatenated_values > 0).sum()  
                 # Calculate the percentage
                 percentage = (count_greater_than_zero / total_count_non_null) * 100 if total_count_non_null > 0 else 0
+                outlierCount = count_greater_than_zero
 
                 # Define the new row as a Series
                 basin = pd.Series({
@@ -64,7 +65,8 @@ for fl in fileList:
                     'abnormal': ab,
                     'method': m,
                     'component': l,
-                    'percentage': percentage
+                    'percentage': percentage,
+                    "outlierCount": outlierCount
                 })
                 globDF = pd.concat([globDF,basin.to_frame().T],ignore_index=True)
 # # print(globDF)
@@ -73,8 +75,13 @@ for fl in fileList:
 ###################################
 # visualize 
 ###################################
-# Initialize a grid of plots with a specific size (4 rows * 2 columns)
-fig, axes = plt.subplots(nrows=4, ncols=2, figsize=(12, 12), sharey=True)
+# Define y-limits for each column
+y_limits = [(0, 5), (0, 32)]  # Example limits for two columns
+# Prepare an empty list to collect data for the integrated table
+all_data = []
+
+# Initialize a grid of plots with a specific size (4 rows * 2 columns), sharey=True
+fig, axes = plt.subplots(nrows=4, ncols=2, figsize=(12, 12))
 # Generate plots for each component and abnormal situation
 for i, compon in enumerate(component):
     for j, abnorm in enumerate(abnormal):
@@ -82,6 +89,29 @@ for i, compon in enumerate(component):
         subset = globDF[(globDF['component'] == compon) & (globDF['abnormal'] == abnorm)]
         # # save subset to csv
         # subset.to_csv(path+'vis/'+component+abnormal+'_subset.csv', index=False)
+
+        #  # Aggregate the percentage by basinID
+        # basin_aggregate = subset.groupby('basinID')['percentage'].mean()  # Change to 'sum()' if needed        
+        # # Print the aggregated percentage for each basin
+        # print(f'\nComponent: {compon}, Abnormal: {abnorm}')
+        # for basinID, percentage in basin_aggregate.items():
+        #     print(f'BasinID: {basinID}, Average Percentage: {percentage}')
+        # # Aggregate the percentage by basinID for the current component
+        # basin_aggregate = subset.groupby('basinID')['percentage'].mean().reset_index()
+        # basin_aggregate['component'] = compon  # Add component as a new column        
+        # # Print the table with basin, component, and percentage
+        # print(f'\nComponent: {compon}, Abnormal: {abnorm}')
+        # print(basin_aggregate[['basinID', 'component', 'percentage']])
+        # Aggregate the percentage by basinID for the current component
+        if j==0:
+            basin_aggregate = subset.groupby('basinID')['percentage'].mean().reset_index()
+            basin_aggregate['component'] = compon  # Add component as a new column
+
+            # aggregate count
+            basin_aggregate['outlierCount'] = subset.groupby('basinID')['outlierCount'].sum().reset_index()['outlierCount']
+            
+            # Append data to the list
+            all_data.append(basin_aggregate)
         
         # Create bar plot for the subset
         ax = axes[i, j]
@@ -96,7 +126,7 @@ for i, compon in enumerate(component):
         
         # Set plot title and labels
         ax.set_title(f'Component: {compon}, Abnormal: {abnorm}')
-
+        
          # Set x-label only for the last row
         if i == len(component) - 1:
             ax.set_xlabel('BasinID')
@@ -105,13 +135,22 @@ for i, compon in enumerate(component):
         
         # Set y-label only for the first column
         if j == 0:
-            ax.set_ylabel('Percentage')
+            ax.set_ylabel('Percentage')            
         else:
             ax.set_ylabel('')
+        ax.set_ylim(y_limits[j])            
 
         # Add legend only to the last subplot in each row
         if i != 0 or j != 0:
             ax.get_legend().remove()
+
+# Concatenate all collected data into a single DataFrame
+integrated_table = pd.concat(all_data, ignore_index=True)
+# Set the display options to print more rows
+pd.set_option('display.max_rows', 100)
+# Print the integrated table
+print("\nIntegrated Table:")
+print(integrated_table[['basinID', 'component', 'percentage','outlierCount']].to_string(max_rows=120))
 
 # Automatically adjust subplot parameters to give specified padding
 plt.tight_layout()

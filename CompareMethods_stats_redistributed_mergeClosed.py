@@ -33,7 +33,6 @@ for ind in ['','_1','_2']:    #
     df_statsAll = pd.DataFrame(columns=['Basin', 'index', 'method', 'PBIAS', 'CC', 'RMSE', 'ME', 'ME1', 'MAE', 'MAPE'])
     # Iterate through CSV files
     for csv_file in csv_files:
-    # for csv_file in [r'E:\Huan\OneDrive - pku.edu.cn\LIHUAN\coding_desktop\python\ArcPy\FileProcess\WaterBudget_online\28redistribution_outliers_mergeClosed_partTrue\1159100.csv']:
         file_name = get_file_name(csv_file).split('_')[0]
         print("-------------------------------------Processing file:", file_name)
 
@@ -200,9 +199,9 @@ for ind in ['','_1','_2']:    #
             df_statsAll = pd.concat([df_statsAll,new_row],ignore_index=True)
         # ***************************** TWSC ***************************    
 
-    # print(df_statsAll)
-    output_csv = os.path.join(output_folder, 'comparison_allBasins'+ind+'.csv')
-    df_statsAll.to_csv(output_csv, index=False)
+    # # print(df_statsAll)
+    # output_csv = os.path.join(output_folder, 'comparison_allBasins'+ind+'.csv')
+    # df_statsAll.to_csv(output_csv, index=False)
 
     out.append(df_statsAll[['PBIAS','CC','RMSE','ME','ME1','MAE','MAPE']].mean())
     # print('In '+ind+':',df_statsAll[['PBIAS','CC','RMSE','ME','ME1','MAE','MAPE']].mean())
