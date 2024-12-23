@@ -11,7 +11,12 @@ sns.set_style("whitegrid")
 path = os.path.join(os.path.dirname(__file__), '', '')
 # filePath = path+"extracted_withoutCDR_output/"
 # filePath = path+"3BasinsComparison - output/"
-filePath = path+"28BasinsComparison - output/"
+# filePath = path+"28BasinsComparison - output/"
+
+# Original BCC without introduce observations
+filePath = path+"3BasinsComparison/"
+# # Observations introduced without redistribute residual
+# filePath = path+"3BasinsComparison_obsIntroduced/"
 
 test = False
 pattern = "*.csv"
@@ -36,6 +41,8 @@ globDF = pd.DataFrame(columns=['basinID', 'abnormal', 'method','component', 'per
 for fl in fileList:
     fileName = get_file_name(fl)
     print("----------------------------------",fileName)
+    if "_bcc" in fileName :
+        continue
     data = pd.read_csv(fl)#.head(6)
     columns =data.columns
     # print(data)    

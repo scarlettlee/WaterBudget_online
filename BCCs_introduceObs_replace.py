@@ -21,14 +21,14 @@ if basin3Flag:
     excel_data = excel_data.rename(columns={2181900: str(2181900),4127800: str(4127800),6742900: str(6742900)})
     # # 3 test basins 
     pth = os.path.join(os.path.dirname(__file__), '', '3data_basin/')
-    output_dir = os.path.join(os.path.dirname(__file__), '', '3BasinsComparison_obsIntroduced/')
+    output_dir = os.path.join(os.path.dirname(__file__), '', '3BasinsComparison_obsIn_replace/')
 else:
     # read observed precipitation
     xlsx_file = csv_folder+"3BasinsComparison/stationsPrecipitation.xlsx"
     excel_data = pd.read_excel(xlsx_file, dtype=float)
     excel_data = excel_data.rename(columns={1159100: str(1159100), 1234150: str(1234150), 2180800: str(2180800), 2181900: str(2181900), 2909150: str(2909150), 2912600: str(2912600), 3265601: str(3265601), 3629001: str(3629001), 4103200: str(4103200), 4115201: str(4115201), 4127800: str(4127800), 4146281: str(4146281), 4146360: str(4146360), 4147703: str(4147703), 4150450: str(4150450), 4150500: str(4150500), 4152050: str(4152050), 4207900: str(4207900), 4208025: str(4208025), 4213711: str(4213711), 4214270: str(4214270), 4243151: str(4243151), 5404270: str(5404270), 6226800: str(6226800), 6340110: str(6340110), 6435060: str(6435060), 6457010: str(6457010), 6590700: str(6590700)})
     pth = os.path.join(os.path.dirname(__file__), '', '28data_basin/')
-    output_dir = os.path.join(os.path.dirname(__file__), '', '28BasinsComparison_obsIntroduced/')
+    output_dir = os.path.join(os.path.dirname(__file__), '', '28BasinsComparison_obsIn_replace/')
 
 tolerance = 0.15
 if test:

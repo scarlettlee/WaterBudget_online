@@ -30,7 +30,6 @@ else:
     pth = os.path.join(os.path.dirname(__file__), '', '28data_basin/')
     output_dir = os.path.join(os.path.dirname(__file__), '', '28BasinsComparison_obsIntroduced/')
 
-tolerance = 0.15
 if test:
     # pattern = '6742900.csv'
     # pattern = '1147010.csv'
@@ -207,8 +206,6 @@ for fl in fileList:
             for i in [0, 1, 2, 3]:
                 params.append(data[lab[i] + combin[i]][index])
 
-            iter_res = 0
-            iter_flag = False
             residential = params[0] - params[1] - params[2] - params[3]
             # compute weights w and PR corrected values        
             for i in [0, 1, 2, 3]:
@@ -219,26 +216,6 @@ for fl in fileList:
                     w = -w
                 data['PR_' + combin + '_' + lab[i]][index] = data[lab[i] + combin[i]][index] + residential * w
                 data['PR_' + combin + '_' + lab[i]+'_r'][index] = residential * w
-
-                # if precipitation exceed the tolerence
-                # set the precipitation to observation                
-                if i == 0 and getUncert(data['P'][index],data['PR_' + combin + '_P'][index]) > tolerance:
-                    iter_res =  data['PR_' + combin + '_P'][index] - data['P'][index]
-                    data['PR_' + combin + '_P'][index] = data['P'][index]
-                    data['PR_' + combin + '_P_r'][index] = 0
-                    data['PR_' + combin + '_P_w'][index] = 0  
-
-                    iter_flag = True
-            
-            # redistribute the new residence
-            if iter_flag:
-                newParams = params[1:]
-                newSum = sum([abs(ele) for ele in newParams])
-                for i in [1,2,3]:
-                    w = abs(params[i]) / newSum 
-                    data['PR_' + combin + '_' + lab[i] + '_w'][index] = w  
-                    data['PR_' + combin + '_' + lab[i]][index] = data['PR_' + combin + '_' + lab[i]][index] - iter_res * w   
-                    data['PR_' + combin + '_' + lab[i]+'_r'][index] = data['PR_' + combin + '_' + lab[i]+'_r'][index] - iter_res * w  
 
         ######## CKF #############################################################################################
         # compute corrected values: CKF_####_P/E/R/S
@@ -258,9 +235,7 @@ for fl in fileList:
                 params.append(data[lab[i] + combin[i]][index])
             # runoff should have the lowest weight
             d[2] = np.min(d)
-
-            iter_res = 0
-            iter_flag = False
+            
             residential = params[0] - params[1] - params[2] - params[3]
             # compute weights w and CKF corrected values        
             for i in [0, 1, 2, 3]:
@@ -271,26 +246,6 @@ for fl in fileList:
                     w = -w
                 data['CKF_' + combin + '_' + lab[i]][index] = data[lab[i] + combin[i]][index] + residential * w
                 data['CKF_' + combin + '_' + lab[i]+'_r'][index] = residential * w
-
-                # if precipitation exceed the tolerence
-                # set the precipitation to observation                
-                if i == 0 and getUncert(data['P'][index],data['CKF_' + combin + '_P'][index]) > tolerance:
-                    iter_res =  data['CKF_' + combin + '_P'][index] - data['P'][index]
-                    data['CKF_' + combin + '_P'][index] = data['P'][index]
-                    data['CKF_' + combin + '_P_r'][index] = 0
-                    data['CKF_' + combin + '_P_w'][index] = 0  
-
-                    iter_flag = True
-            
-            # redistribute the new residence
-            if iter_flag:
-                newParams = d[1:]
-                newSum = sum([abs(ele) for ele in newParams])
-                for i in [1,2,3]:
-                    w = abs(d[i]) / newSum
-                    data['CKF_' + combin + '_' + lab[i] + '_w'][index] = w
-                    data['CKF_' + combin + '_' + lab[i]][index] = data['CKF_' + combin + '_' + lab[i]][index] - iter_res * w
-                    data['CKF_' + combin + '_' + lab[i]+'_r'][index] = data['CKF_' + combin + '_' + lab[i]+'_r'][index] - iter_res * w
 
         ######## MCL #############################################################################################
         # compute corrected values: MCL_####_P/E/R/S
@@ -312,8 +267,6 @@ for fl in fileList:
             # runoff should have the lowest weight
             d[2] = np.min(d)
 
-            iter_res = 0
-            iter_flag = False
             residential = params[0] - params[1] - params[2] - params[3]
             # compute weights w and MCL corrected values        
             for i in [0, 1, 2, 3]:
@@ -324,26 +277,6 @@ for fl in fileList:
                     w = -w
                 data['MCL_' + combin + '_' + lab[i]][index] = data[lab[i] + combin[i]][index] + residential * w
                 data['MCL_' + combin + '_' + lab[i]+'_r'][index] = residential * w
-
-                # if precipitation exceed the tolerence
-                # set the precipitation to observation                
-                if i == 0 and getUncert(data['P'][index],data['MCL_' + combin + '_P'][index]) > tolerance:
-                    iter_res =  data['MCL_' + combin + '_P'][index] - data['P'][index]
-                    data['MCL_' + combin + '_P'][index] = data['P'][index]
-                    data['MCL_' + combin + '_P_r'][index] = 0
-                    data['MCL_' + combin + '_P_w'][index] = 0  
-
-                    iter_flag = True
-            
-            # redistribute the new residence
-            if iter_flag:
-                newParams = d[1:]
-                newSum = sum([abs(ele) for ele in newParams])
-                for i in [1,2,3]:
-                    w = abs(d[i]) / newSum
-                    data['MCL_' + combin + '_' + lab[i] + '_w'][index] = w
-                    data['MCL_' + combin + '_' + lab[i]][index] = data['MCL_' + combin + '_' + lab[i]][index] - iter_res * w
-                    data['MCL_' + combin + '_' + lab[i]+'_r'][index] = data['MCL_' + combin + '_' + lab[i]+'_r'][index] - iter_res * w
 
         ######## MSD #############################################################################################
         # distances of all observations
@@ -382,8 +315,6 @@ for fl in fileList:
                 d.append(data[lab[i] + combin[i] + '_D'][index])
                 params.append(data[lab[i] + combin[i]][index])
 
-            iter_res = 0
-            iter_flag = False
             residential = params[0] - params[1] - params[2] - params[3]
             # compute weights w and MSD corrected values
             for i in [0, 1, 2, 3]:
@@ -397,26 +328,6 @@ for fl in fileList:
                     w = -w
                 data['MSD_' + combin + '_' + lab[i]][index] = data[lab[i] + combin[i]][index] + residential * w
                 data['MSD_' + combin + '_' + lab[i]+'_r'][index] = residential * w
-
-                # if precipitation exceed the tolerence
-                # set the precipitation to observation                
-                if i == 0 and getUncert(data['P'][index],data['MSD_' + combin + '_P'][index]) > tolerance:
-                    iter_res =  data['MSD_' + combin + '_P'][index] - data['P'][index]
-                    data['MSD_' + combin + '_P'][index] = data['P'][index]
-                    data['MSD_' + combin + '_P_r'][index] = 0
-                    data['MSD_' + combin + '_P_w'][index] = 0  
-
-                    iter_flag = True
-            
-            # redistribute the new residence
-            if iter_flag:
-                newParams = d[1:]
-                newSum = sum([abs(ele) for ele in newParams])
-                for i in [1,2,3]:
-                    w = abs(d[i]) / newSum
-                    data['MSD_' + combin + '_' + lab[i] + '_w'][index] = w 
-                    data['MSD_' + combin + '_' + lab[i]][index] = data['MSD_' + combin + '_' + lab[i]][index] - iter_res * w
-                    data['MSD_' + combin + '_' + lab[i]+'_r'][index] = data['MSD_' + combin + '_' + lab[i]+'_r'][index] - iter_res * w
 
         first = False
 
