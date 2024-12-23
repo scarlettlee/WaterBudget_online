@@ -2,7 +2,7 @@ import os, fnmatch
 import pandas as pd
 import re
 import numpy as np
-from globVar import basin3Flag,  find_pattern, get_file_name
+from globVar import basin3Flag,  obsIntroduced, find_pattern, get_file_name
 
 def redistribute_ET(row):
     tempE = row['P_closed'] - row['R_closed'] - row['S_closed']
@@ -17,7 +17,10 @@ path = os.path.join(os.path.dirname(__file__), '', '/')
 csv_folder = os.path.join(os.path.dirname(__file__), '', '')
 if basin3Flag:
     xlsx_file = csv_folder+"3BasinsComparison - old/stationsPrecipitation.xlsx"
-    filePath = os.path.join(os.path.dirname(__file__), '', '3BasinsComparison_obsIntroduced/')
+    if obsIntroduced:
+        filePath = os.path.join(os.path.dirname(__file__), '', '3BasinsComparison_obsIn_replace/')
+    else: # this part may never be needed
+        filePath = os.path.join(os.path.dirname(__file__), '', '3BasinsComparison/')
     outPath = os.path.join(os.path.dirname(__file__), '', '3BasinsComparison_mergeClosed_partTrue/')
 
     # Read Excel file
@@ -25,7 +28,10 @@ if basin3Flag:
     excel_data = excel_data.rename(columns={2181900: str(2181900),4127800: str(4127800),6742900: str(6742900)})
 else:
     xlsx_file = csv_folder+"3BasinsComparison/stationsPrecipitation.xlsx"
-    filePath = os.path.join(os.path.dirname(__file__), '', '28BasinsComparison_obsIntroduced/')
+    if obsIntroduced:
+        filePath = os.path.join(os.path.dirname(__file__), '', '28BasinsComparison_obsIn_replace/')
+    else: # this part may never be needed
+        filePath = os.path.join(os.path.dirname(__file__), '', '28BasinsComparison/')
     outPath = os.path.join(os.path.dirname(__file__), '', '28BasinsComparison_mergeClosed_partTrue/')
 
     # Read Excel file

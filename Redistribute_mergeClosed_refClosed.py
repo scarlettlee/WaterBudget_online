@@ -54,7 +54,7 @@ def sign(x):
   
 # The function checks the values of a and b and returns different values based on the conditions
 def compute_newR1(row, l, col): # P and PR_####_P  
-    a = row[l] # the reference to be compared with P#
+    a = row[l] # the reference to be compared with P
     b = row[col]   # the BCC result
     
     # Check if b is null
