@@ -108,7 +108,7 @@ def compute_newR2(row, l, col): # E_P# and PR_####_P_r
 # as long as all values of r1 is not null, it will be redistributed according to weights columns (PR_####_P_w)
 # update: include both r1 and r2
 def redistributeR(row,filtered, index):
-    # get all columns with r1
+    # get all columns with r1： PR_####_P_r1
     r1_columns = [col for col in filtered if col.endswith('_r'+index)]
 
     # check if all r1 values are 0
@@ -126,7 +126,7 @@ def redistributeR(row,filtered, index):
         # check which r1 column is 0 then distribute sum_r1 to them
         # before that, the weights of these columns should be summed up and recomputed
         for col in r1_columns:
-            if row[col] == 0:
+            if row[col] == 0 and col[-4:-3]!='R': # exclude Runoff
                 cols_to_update.append(col[:-3])
                 weights.append(row[col[:-3] + '_w'])
         # redistribute to cols_to_update
