@@ -6,7 +6,7 @@ from itertools import combinations
 from math import comb
 
 basin3Flag= True
-obsIntroduced = True
+obsIntroduced = False
 strategy = "mergeAsRef"
 
 # match a pattern:
