@@ -6,9 +6,18 @@ import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 # For compare:  MSD_5414_S, MSD_5414_S, MSD_5414_S_1, MSD_5414_S_2 ]#
-datasetFolders = ['BasinsComparison', 'BasinsComparison_obsIntroduced', 'redistribution_obsIn_outliersRedistributed', 'redistribution_outliers_mergeClosed_partTrue']
-suffix = ['','','_1','_2']
-test = False
+datasetFolders = ['BasinsComparison_mergeClosed_partTrue']
+suffix = ['']
+
+# datasetFolders =['BasinsComparison1', 'BasinsComparison_obsIntroduced1', 'redistribution_obsIn_outliersRedistributed', \
+# 'BasinsComparison_mergeClosed_partTrue']
+# suffix = ['','','_1','']
+
+# datasetFolders =['BasinsComparison1', 'BasinsComparison_obsIntroduced1', 'redistribution_obsIn_outliersRedistributed', \
+# 'redistribution_outliers_mergeClosed_partTrue']
+# suffix = ['','','_1','_2']
+
+test = True
 
 # Define paths and folders
 csv_folder = os.path.join(os.path.dirname(__file__), '', '')
@@ -23,21 +32,20 @@ for index, dataset in enumerate(datasetFolders):
         csv_files = find_pattern("*.csv", csv_folder+'3'+dataset+'/')
         if test:
             # csv_files = [csv_folder+'3'+dataset+'/2181900.csv']    
-            csv_files = [csv_folder+'3'+dataset+'/4127800.csv']    
+            csv_files = [csv_folder+'3'+dataset+'/4127800_bcc.csv']    
             # csv_files = [csv_folder+'3'+dataset+'/6742900.csv']    
         
         refDataFolder = '3BasinsComparison_mergeClosed_partTrue'
     else:
         csv_files = find_pattern("*.csv", csv_folder+'28'+dataset+'/')
         if test:
-            csv_files = [csv_folder+'28'+dataset+'/4127800.csv']  
+            csv_files = [csv_folder+'28'+dataset+'/2181900.csv']    
+            # csv_files = [csv_folder+'28'+dataset+'/4127800.csv']  
 
         refDataFolder = '28BasinsComparison_mergeClosed_partTrue'
 
     # Iterate through CSV files: each basin
     for csv_file in csv_files:
-        if "_bcc" in csv_file:
-            continue
         file_name = get_file_name(csv_file).split('_')[0]
         print("-------------------------------------Processing file:", file_name) 
 
@@ -55,8 +63,10 @@ for index, dataset in enumerate(datasetFolders):
 
         # if not the last foler
         # combine csv data and reference data and drop unclosed-ref rows
-        if dataset != 'redistribution_outliers_mergeClosed_partTrue':
+        if dataset != 'redistribution_outliers_mergeClosed_partTrue' and dataset != 'BasinsComparison_mergeClosed_partTrue':
             csv_data = pd.concat([csv_data, ref_data], axis=1).dropna(subset=['P_closed','R_closed','E_closed','S_closed'])
+        else:
+            csv_data = csv_data.dropna(subset=['P_closed','R_closed','E_closed','S_closed'])
         # print(len(csv_data))
 
         # iterate PERS
@@ -68,7 +78,8 @@ for index, dataset in enumerate(datasetFolders):
         
             # Compute statistics for each column pair
             for csv_column in required_columns:
-                pbias, cc, rmse, me, me1, mae, mape = compute_stats(csv_data[component+'_closed'][3:], csv_data[csv_column][3:])
+                # pbias, cc, rmse, me, me1, mae, mape = compute_stats(csv_data[component+'_closed'][3:], csv_data[csv_column][3:])
+                pbias, cc, rmse, me, me1, mae, mape = compute_stats(csv_data[component+'_closed'], csv_data[csv_column])
         
                 # Append statistics to DataFrame
                 new_row = pd.DataFrame([{'Dataset': dataset,'Basin': file_name, 'Combination': csv_column, 'PBIAS': pbias, 'CC': cc, 
@@ -88,10 +99,12 @@ for index, dataset in enumerate(datasetFolders):
                                 'RMSE': rmse, 'ME': me, 'ME1': me1, 'MAE': mae, 'MAPE': mape}])
                 df_statsAll = pd.concat([df_statsAll,new_row],ignore_index=True)
 
-    # df_statsAll = df_statsAll[(df_statsAll['method'] != 'MSD')]
-    meanStats = df_statsAll[['PBIAS','CC','RMSE','ME','ME1','MAE','MAPE']].mean()
-    out.append(meanStats)
-    print('In '+dataset+':\n',meanStats)
+    # print(df_statsAll)
+
+    # # df_statsAll = df_statsAll[(df_statsAll['method'] != 'MSD')]
+    # meanStats = df_statsAll[['PBIAS','CC','RMSE','ME','ME1','MAE','MAPE']].mean()
+    # out.append(meanStats)
+    # print('In '+dataset+':\n',meanStats)
 
     # # 按方法分组并计算每个分组的统计指标    
     # grouped_stats = df_statsAll.groupby('method')[['PBIAS','CC','RMSE','ME','ME1','MAE','MAPE']].mean()
@@ -100,14 +113,14 @@ for index, dataset in enumerate(datasetFolders):
     #     print(f'In {dataset}, Method: {method}:\n', stats)
     #     out.append(stats)
 
-    # # 筛选出method为CKF和MSD的项
-    # filtered_df = df_statsAll[(df_statsAll['method'] == 'CKF') | (df_statsAll['method'] == 'MSD')]
-    # # 按index和method分组并计算每个分组的统计指标
-    # grouped_stats = filtered_df.groupby(['index', 'method'])[['PBIAS','CC','RMSE','ME','ME1','MAE','MAPE']].mean()
-    # # 遍历每个分组，输出统计指标
-    # for (index, method), stats in grouped_stats.iterrows():
-    #     print(f'In {dataset}, Index: {index}, Method: {method}:\n', stats)
-    #     out.append(stats)
+    # 筛选出method为CKF和MSD的项
+    filtered_df = df_statsAll[df_statsAll['method'] == 'CKF']
+    # 按index和method分组并计算每个分组的统计指标
+    grouped_stats = filtered_df.groupby(['index', 'method'])[['PBIAS','CC','RMSE','ME','ME1','MAE','MAPE']].mean()
+    # 遍历每个分组，输出统计指标
+    for (index, method), stats in grouped_stats.iterrows():
+        print(f'In {dataset}, Index: {index}, Method: {method}:\n', stats)
+        out.append(stats)
 
 
 # print(out)    

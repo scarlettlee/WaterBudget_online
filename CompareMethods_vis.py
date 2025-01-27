@@ -8,7 +8,7 @@ import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 # For compare:  MSD_5414_S, MSD_5414_S, MSD_5414_S_1, MSD_5414_S_2 ]#
-datasetFolders = ['BasinsComparison', 'BasinsComparison_obsIntroduced', 'redistribution_obsIn_outliersRedistributed', 'redistribution_outliers_mergeClosed_partTrue']
+datasetFolders = ['BasinsComparison1', 'BasinsComparison_obsIntroduced1', 'redistribution_obsIn_outliersRedistributed', 'redistribution_outliers_mergeClosed_partTrue']
 suffix = ['','','_1','_2']
 test = True
 
@@ -16,7 +16,7 @@ test = True
 csv_folder = os.path.join(os.path.dirname(__file__), '', '')
 outPath = os.path.join(os.path.dirname(__file__), '', 'results/')
 
-targetMethod = "MSD"
+targetMethod = "CKF"
 out = [] # store the results
 # Create scatter plots with subplots
 fig, axes = plt.subplots(nrows=4, ncols=4, figsize=(10, 8), sharex=True, sharey=True)
@@ -35,14 +35,13 @@ for index, dataset in enumerate(datasetFolders):
     else:
         csv_files = find_pattern("*.csv", csv_folder+'28'+dataset+'/')
         if test:
-            csv_files = [csv_folder+'28'+dataset+'/4127800.csv']  
+            csv_files = [csv_folder+'28'+dataset+'/2181900.csv']    
+            # csv_files = [csv_folder+'28'+dataset+'/4127800.csv']  
 
         refDataFolder = '28BasinsComparison_mergeClosed_partTrue'
 
     # Iterate through CSV files: each basin
     for csv_file in csv_files:
-        if "_bcc" in csv_file:
-            continue
         file_name = get_file_name(csv_file).split('_')[0]
         print("-------------------------------------Processing file:", dataset, file_name) 
 
@@ -124,6 +123,8 @@ for index, dataset in enumerate(datasetFolders):
             #     ax=ax
             # )          
             ax.axline((0, 0), slope=1, color='black', linestyle='--')
+            # draw a y=0 line
+            ax.axhline(y=0, color='black', linestyle='--')
             # Set titles and labels
             if row == 0:
                 ax.set_title(dataset)

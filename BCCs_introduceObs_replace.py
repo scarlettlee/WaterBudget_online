@@ -12,11 +12,11 @@ simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
 # pd.set_option('display.max_rows', None)
 pd.options.mode.chained_assignment = None
 
-test = False
+test = True
 csv_folder = os.path.join(os.path.dirname(__file__), '', '')
 if basin3Flag:
     # read observed precipitation    
-    xlsx_file = csv_folder+"3BasinsComparison - old/stationsPrecipitation.xlsx"
+    xlsx_file = csv_folder+"3BasinsComparison/stationsPrecipitation.xlsx"
     excel_data = pd.read_excel(xlsx_file, dtype=float)
     excel_data = excel_data.rename(columns={2181900: str(2181900),4127800: str(4127800),6742900: str(6742900)})
     # # 3 test basins 
@@ -24,7 +24,7 @@ if basin3Flag:
     output_dir = os.path.join(os.path.dirname(__file__), '', '3BasinsComparison_obsIn_replace/')
 else:
     # read observed precipitation
-    xlsx_file = csv_folder+"3BasinsComparison/stationsPrecipitation.xlsx"
+    xlsx_file = csv_folder+"28BasinsComparison/stationsPrecipitation.xlsx"
     excel_data = pd.read_excel(xlsx_file, dtype=float)
     excel_data = excel_data.rename(columns={1159100: str(1159100), 1234150: str(1234150), 2180800: str(2180800), 2181900: str(2181900), 2909150: str(2909150), 2912600: str(2912600), 3265601: str(3265601), 3629001: str(3629001), 4103200: str(4103200), 4115201: str(4115201), 4127800: str(4127800), 4146281: str(4146281), 4146360: str(4146360), 4147703: str(4147703), 4150450: str(4150450), 4150500: str(4150500), 4152050: str(4152050), 4207900: str(4207900), 4208025: str(4208025), 4213711: str(4213711), 4214270: str(4214270), 4243151: str(4243151), 5404270: str(5404270), 6226800: str(6226800), 6340110: str(6340110), 6435060: str(6435060), 6457010: str(6457010), 6590700: str(6590700)})
     pth = os.path.join(os.path.dirname(__file__), '', '28data_basin/')
@@ -141,13 +141,14 @@ for fl in fileList:
     # MCL_distances 12 values (5 3 4 for P ET and S respectively)
     # compute true values
     for index, row in data.iterrows():        
-        for m in ['E', 'S']:
+        for m in ['P','E', 'S']:
             # raw
             r = re.compile(m + "[12345](?!\d)$")  # code : 12345
             filtered = list(filter(r.match, col))
-
-            arr = data[filtered].iloc[index].to_numpy()
-            data[m][index] = getMergedTrue(arr)
+            
+            if m != 'P': # P use observed values while E and S use merged
+                arr = data[filtered].iloc[index].to_numpy()
+                data[m][index] = getMergedTrue(arr)
             ####################################
             # add columns to compute error limit  
             # according to true values E_P/E/R/S#

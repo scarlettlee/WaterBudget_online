@@ -101,7 +101,7 @@ def redistributeR(row,filtered,index):
         # check which r1 column is 0 then distribute sum_r1 to them
         # before that, the weights of these columns should be summed up and recomputed
         for col in r1_columns:
-            if row[col] == 0:
+            if row[col] == 0 and col[-4:-3]!='R': #: exclude Runoff
                 cols_to_update.append(col[:-3])
                 weights.append(row[col[:-3] + '_w'])
         # redistribute to cols_to_update
@@ -116,33 +116,39 @@ def redistributeR(row,filtered,index):
     return row
 
 # whether only compute outliers
-introduceObs = False
-redistribute = False
+# Change this flags to 制作原_bcc文件的副本到同一文件夹下(三种方法)
+introduceObs = True
+redistribute = True
 # input file path
 path = os.path.join(os.path.dirname(__file__), '', '')
 if basin3Flag:
-    filePath = path+"3BasinsComparison/"
-    if introduceObs:
+    if introduceObs and redistribute:
         filePath = path+"3BasinsComparison_obsIntroduced/"
-
-    outPath = filePath
-    if redistribute:
         outPath = path + "3redistribution_obsIn_outliersRedistributed/"
+    elif introduceObs and not redistribute:
+        filePath = path+"3BasinsComparison_obsIntroduced/"
+        outPath = path + "3BasinsComparison_obsIntroduced1/"
+    else:
+        filePath = path+"3BasinsComparison/"
+        outPath = path + "3BasinsComparison1/"
 else:
-    filePath = path+"28BasinsComparison/"
-    if introduceObs:
+    if introduceObs and redistribute:
         filePath = path+"28BasinsComparison_obsIntroduced/"
-    outPath = filePath
-    if redistribute:
         outPath = path + "28redistribution_obsIn_outliersRedistributed/"
-
+    elif introduceObs and not redistribute:
+        filePath = path+"28BasinsComparison_obsIntroduced/"
+        outPath = path + "28BasinsComparison_obsIntroduced1/"
+    else:
+        filePath = path+"28BasinsComparison/"
+        outPath = path + "28BasinsComparison1/"
 
 test = False
 # traverse input files
 pattern = "*.csv"
 if test:
     # pattern = "1147010_bccTest.csv"
-    pattern = "4127800_bcc.csv"
+    # pattern = "4127800_bcc.csv"
+    pattern = "data_bcc.csv"
 fileList = find_pattern(pattern, filePath)
 # print(fileList)
 
@@ -159,44 +165,31 @@ for fl in fileList:
     columns =data.columns
     # print(data)
 
-    ####################################
-    # recompute merged components P/E/R/S to make it close  
-    # ##################################
-    data['RR'] = data['R'] 
-    data['PP'] = data['P']
-    data['SS'] = data['S']
-    data = data.apply(redistribute_ET4Ref, axis=1)
+    # ####################################
+    # # recompute merged components P/E/R/S to make it close  
+    # # ##################################
+    # data['RR'] = data['R'] 
+    # data['PP'] = data['P']
+    # data['SS'] = data['S']
+    # data = data.apply(redistribute_ET4Ref, axis=1)
 
-    ####################################
-    # recompute columns E_P/E/R/S# with P/E/R/S  
-    # ##################################
-    # For P: true value merged values
-    p_columns = [col for col in data.columns if re.match(r'^P\d+$', col) ]
-    for col in p_columns:
-        data[f'E_{col}'] = abs(data[col] - data['PP'])
-    # data['E_P1'] = abs(data['P1']-data['PP'])
-    # data['E_P2'] = abs(data['P2']-data['PP'])
-    # data['E_P3'] = abs(data['P3']-data['PP'])
-    # data['E_P4'] = abs(data['P4']-data['PP'])
-    # data['E_P5'] = abs(data['P5']-data['PP'])
-    # For E: E#*20%
-    e_columns = [col for col in data.columns if re.match(r'^E\d+$', col) ]
-    for col in e_columns:
-        data[f'E_{col}'] = abs(data[col] - data['EE'])
-    # data['E_E1'] = abs(data['E1']-data['EE'])
-    # data['E_E2'] = abs(data['E1']-data['EE'])
-    # data['E_E3'] = abs(data['E1']-data['EE'])
-    # data['E_E4'] = abs(data['E1']-data['EE'])
-    # For R: R*7%
-    data['E_R1'] = data['R1']*0.07
-    # For S: true value TWSC_GRACE_Mascon_JPL_calculate
-    s_columns = [col for col in data.columns if re.match(r'^S\d+$', col) ]
-    for col in s_columns:
-        data[f'E_{col}'] = abs(data[col] - data['SS'])
-    # data['E_S1'] = abs(data['S1']-data['SS'])
-    # data['E_S2'] = abs(data['S2']-data['SS'])
-    # data['E_S3'] = abs(data['S3']-data['SS'])
-    # data['E_S4'] = abs(data['S4']-data['SS'])
+    # ####################################
+    # # recompute columns E_P/E/R/S# with P/E/R/S  
+    # # ##################################
+    # # For P: true value merged values
+    # p_columns = [col for col in data.columns if re.match(r'^P\d+$', col) ]
+    # for col in p_columns:
+    #     data[f'E_{col}'] = abs(data[col] - data['PP'])
+    # # For E: E#*20%
+    # e_columns = [col for col in data.columns if re.match(r'^E\d+$', col) ]
+    # for col in e_columns:
+    #     data[f'E_{col}'] = abs(data[col] - data['EE'])
+    # # For R: R*7%
+    # data['E_R1'] = data['R1']*0.07
+    # # For S: true value TWSC_GRACE_Mascon_JPL_calculate
+    # s_columns = [col for col in data.columns if re.match(r'^S\d+$', col) ]
+    # for col in s_columns:
+    #     data[f'E_{col}'] = abs(data[col] - data['SS'])
 
     # match combinations and prelocate new columns
     exhaustCompnents = [] # for P,E,S [['1', '2', '3', '4', '5'], ['1', '2', '3', '4'], ['1', '2', '3', '4']]
@@ -226,7 +219,7 @@ for fl in fileList:
 
             for col in filtered:#['MSD_5414_P']:#
                 # compare each row with merged true value
-                data = data.apply(lambda row: compute_newR1(row, l+l, col), axis=1)  # P and PR_####_P 
+                data = data.apply(lambda row: compute_newR1(row, l, col), axis=1)  # P and PR_####_P +l
     # print(data.columns.to_list())
 
     # redistribute r1 for each BCC and composition
@@ -242,9 +235,6 @@ for fl in fileList:
                 # redistribute r1
                 data = data.apply(lambda row: redistributeR(row,filtered,'1'), axis=1)
 
-    if test:
-        data.to_csv(outPath+fn+"_test.csv",index=False)
-    else:
-        data.to_csv(outPath+fn+".csv",index=False)
+    data.to_csv(outPath+fn+".csv",index=False)
 
 

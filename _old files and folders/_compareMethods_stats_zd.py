@@ -6,7 +6,7 @@ from globVar import basin3Flag, find_pattern, get_file_name, compute_stats
 # Define paths and folders
 csv_folder = os.path.join(os.path.dirname(__file__), '', '')
 if basin3Flag:  
-    xlsx_file = csv_folder+"3BasinsComparison - old/stationsPrecipitation.xlsx"
+    xlsx_file = csv_folder+"3BasinsComparison/stationsPrecipitation.xlsx"
     output_folder = os.path.join(os.path.dirname(__file__), '', '3stats_mergedClosed_partTrue/')
     csv_files = find_pattern("*.csv", csv_folder+'3redistribution_outliers_mergeClosed_partTrue/')
 
@@ -14,7 +14,7 @@ if basin3Flag:
     excel_data = pd.read_excel(xlsx_file, dtype=float)
     excel_data = excel_data.rename(columns={2181900: str(2181900),4127800: str(4127800),6742900: str(6742900)})
 else:
-    xlsx_file = csv_folder+"3BasinsComparison/stationsPrecipitation.xlsx"
+    xlsx_file = csv_folder+"28BasinsComparison/stationsPrecipitation.xlsx"
     output_folder = os.path.join(os.path.dirname(__file__), '', '28stats_mergedClosed_partTrue/')
     csv_files = find_pattern("*.csv", csv_folder+'28redistribution_outliers_mergeClosed_partTrue/')
 
