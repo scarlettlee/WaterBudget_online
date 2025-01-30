@@ -69,7 +69,7 @@ def compute_newR1(row, l, col): # P and PR_####_P
     #     row[col+'_1'] = row[col] - row[col+'_r1']
     # Check if a is negative and b is positive
     elif (a < 0 and b > 0) | ( a > 0 and b < 0):
-        row[col+'_r1'] = b
+        row[col+'_r1'] = b-a
         # if it is precipitation, reverse its sign
         if col.endswith('P'):
             row[col+'_r1'] = -row[col+'_r1']
@@ -126,6 +126,7 @@ def redistributeR(row,filtered, index):
         # check which r1 column is 0 then distribute sum_r1 to them
         # before that, the weights of these columns should be summed up and recomputed
         for col in r1_columns:
+            print("col[-4:-3]",col[-4:-3])
             if row[col] == 0 and col[-4:-3]!='R': #exclude Runoff
                 cols_to_update.append(col[:-3])
                 weights.append(row[col[:-3] + '_w'])
@@ -149,7 +150,7 @@ else:
     filePath = path+"28BasinsComparison_mergeClosed_partTrue/"
     outPath = path + "28redistribution_outliers_mergeClosed_partTrue/"
 
-test = False
+test = True
 # traverse input files
 pattern = "*.csv"
 if test:
@@ -170,14 +171,6 @@ for fl in fileList:
     data = pd.read_csv(fl)#.head(6)
     columns =data.columns
     # print(data)
-
-    # ####################################
-    # # recompute merged components P/E/R/S to make it close  
-    # # ##################################
-    # data['RR'] = data['R'] 
-    # data['PP'] = data['P']
-    # data['SS'] = data['S']
-    # data = data.apply(redistribute_ET4Ref, axis=1)
 
     # ####################################
     # # recompute columns E_P/E/R/S# with P/E/R/S  
@@ -276,9 +269,10 @@ for fl in fileList:
             # redistribute r2
             data = data.apply(lambda row: redistributeR(row,filtered,'2'), axis=1)
 
-    if test:
-        data.to_csv(outPath+fn+"_test3.csv",index=False)
-    else:
-        data.to_csv(outPath+fn+".csv",index=False)
+    # if test:
+    #     data.to_csv(outPath+fn+"_test3.csv",index=False)
+    # else:
+        # data.to_csv(outPath+fn+".csv",index=False)
+    data.to_csv(outPath+fn+".csv",index=False)
 
 

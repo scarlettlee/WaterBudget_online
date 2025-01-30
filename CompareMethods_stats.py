@@ -5,17 +5,17 @@ from globVar import basin3Flag, find_pattern, get_file_name, compute_stats
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-# For compare:  MSD_5414_S, MSD_5414_S, MSD_5414_S_1, MSD_5414_S_2 ]#
-datasetFolders = ['BasinsComparison_mergeClosed_partTrue']
-suffix = ['']
+# # For compare:  MSD_5414_S, MSD_5414_S, MSD_5414_S_1, MSD_5414_S_2 ]#
+# datasetFolders = ['BasinsComparison_mergeClosed_partTrue']
+# suffix = ['']
 
 # datasetFolders =['BasinsComparison1', 'BasinsComparison_obsIntroduced1', 'redistribution_obsIn_outliersRedistributed', \
 # 'BasinsComparison_mergeClosed_partTrue']
 # suffix = ['','','_1','']
 
-# datasetFolders =['BasinsComparison1', 'BasinsComparison_obsIntroduced1', 'redistribution_obsIn_outliersRedistributed', \
-# 'redistribution_outliers_mergeClosed_partTrue']
-# suffix = ['','','_1','_2']
+datasetFolders =['BasinsComparison1', 'BasinsComparison_obsIntroduced1', 'redistribution_obsIn_outliersRedistributed', \
+'redistribution_outliers_mergeClosed_partTrue']
+suffix = ['','','_1','_2']
 
 test = True
 
@@ -32,7 +32,7 @@ for index, dataset in enumerate(datasetFolders):
         csv_files = find_pattern("*.csv", csv_folder+'3'+dataset+'/')
         if test:
             # csv_files = [csv_folder+'3'+dataset+'/2181900.csv']    
-            csv_files = [csv_folder+'3'+dataset+'/4127800_bcc.csv']    
+            csv_files = [csv_folder+'3'+dataset+'/4127800.csv']    
             # csv_files = [csv_folder+'3'+dataset+'/6742900.csv']    
         
         refDataFolder = '3BasinsComparison_mergeClosed_partTrue'
@@ -47,7 +47,7 @@ for index, dataset in enumerate(datasetFolders):
     # Iterate through CSV files: each basin
     for csv_file in csv_files:
         file_name = get_file_name(csv_file).split('_')[0]
-        print("-------------------------------------Processing file:", file_name) 
+        print("-------------------------------------Processing file:", file_name, " Data:", dataset) 
 
         # Read reference data
         # P_closed	R_closed	E_closed	S_closed
@@ -113,14 +113,16 @@ for index, dataset in enumerate(datasetFolders):
     #     print(f'In {dataset}, Method: {method}:\n', stats)
     #     out.append(stats)
 
-    # 筛选出method为CKF和MSD的项
+    # 筛选出method为CKF的项
     filtered_df = df_statsAll[df_statsAll['method'] == 'CKF']
     # 按index和method分组并计算每个分组的统计指标
     grouped_stats = filtered_df.groupby(['index', 'method'])[['PBIAS','CC','RMSE','ME','ME1','MAE','MAPE']].mean()
-    # 遍历每个分组，输出统计指标
-    for (index, method), stats in grouped_stats.iterrows():
-        print(f'In {dataset}, Index: {index}, Method: {method}:\n', stats)
-        out.append(stats)
+    # 将结果转换为字符串并输出
+    print(grouped_stats.to_string(index=True, header=True))
+    # # 遍历每个分组，输出统计指标
+    # for (index, method), stats in grouped_stats.iterrows():
+    #     print(f'In {dataset}, Index: {index}, Method: {method}:\n', stats)
+    #     out.append(stats)
 
 
 # print(out)    
