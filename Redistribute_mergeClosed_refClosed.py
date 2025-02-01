@@ -126,7 +126,6 @@ def redistributeR(row,filtered, index):
         # check which r1 column is 0 then distribute sum_r1 to them
         # before that, the weights of these columns should be summed up and recomputed
         for col in r1_columns:
-            print("col[-4:-3]",col[-4:-3])
             if row[col] == 0 and col[-4:-3]!='R': #exclude Runoff
                 cols_to_update.append(col[:-3])
                 weights.append(row[col[:-3] + '_w'])
@@ -143,11 +142,17 @@ def redistributeR(row,filtered, index):
 
 # input file path
 path = os.path.join(os.path.dirname(__file__), '', '')
+# if basin3Flag:
+#     filePath = path+"3BasinsComparison_mergeClosed_partTrue/"
+#     outPath = path + "3redistribution_outliers_mergeClosed_partTrue/"
+# else:
+#     filePath = path+"28BasinsComparison_mergeClosed_partTrue/"
+#     outPath = path + "28redistribution_outliers_mergeClosed_partTrue/"
 if basin3Flag:
-    filePath = path+"3BasinsComparison_mergeClosed_partTrue/"
+    filePath = path+"3BasinsComparison_obsIn_replace/"
     outPath = path + "3redistribution_outliers_mergeClosed_partTrue/"
 else:
-    filePath = path+"28BasinsComparison_mergeClosed_partTrue/"
+    filePath = path+"28BasinsComparison_obsIn_replace/"
     outPath = path + "28redistribution_outliers_mergeClosed_partTrue/"
 
 test = True

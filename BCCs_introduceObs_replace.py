@@ -50,7 +50,7 @@ for fl in fileList:
     # df is existing data for validating if BCC functions are right
     # data is used for computing BCC corrected water budget components
     if test:
-        data = pd.read_csv(fl).head(6)
+        data = pd.read_csv(fl)#.head(6)
         # print('data\n',data)
     else:
         data = pd.read_csv(fl) 
@@ -114,6 +114,8 @@ for fl in fileList:
     # give data true columns: P/E/R/S
     for m in lab:
         data[m] = -9999.0    
+        # compute closed value
+        data[m+'_closed'] = -9999.0
         # update: replace merged P with observations 
         if m == 'P':
             data['P'] = excel_data[fileName]
@@ -159,6 +161,24 @@ for fl in fileList:
         data['R'][index] = data['R1'][index]
         # Error limit for R
         data['E_R1'][index] = data['R1'][index]*0.07
+
+        # compute closed value
+        data['P_closed'][index] = data['P'][index]
+        data['R_closed'][index] = data['R'][index]
+        data['E_closed'][index] = data['E'][index]
+        data['S_closed'][index] = data['S'][index]
+        tempE = data['P_closed'][index] - data['R_closed'][index] - data['S_closed'][index]
+        if tempE > 0:
+            data['E_closed'][index] = tempE
+        for m in ['P','E', 'S']:
+            # raw
+            r = re.compile(m + "[12345](?!\d)$")  # code : 12345
+            filtered = list(filter(r.match, col))
+            ####################################
+            # update error limit according to true values E_P/E/R/S#
+            # ##################################
+            for column in filtered:
+                data['E_'+column][index] = abs(data[column][index]-data[m+'_closed'][index])
     # print('with true values', data[['P', 'E', 'S']])
 
     # Construct dictionary for  [PES]_d#t 
@@ -449,8 +469,8 @@ for fl in fileList:
     # colFiltered = list(filter(r.match, data.columns))
     # data = data.drop(colFiltered, axis=1)
 
-    # save data
-    if test:
-        data.to_csv(output_dir+get_file_name(fl)+'_bccTest.csv',index=False)
-    else:
-        data.to_csv(output_dir+get_file_name(fl)+'_bcc'+fl[-4:],index=False)
+    # # save data
+    # if test:
+    #     data.to_csv(output_dir+get_file_name(fl)+'_bccTest.csv',index=False)
+    # else:
+    data.to_csv(output_dir+get_file_name(fl)+'_bcc'+fl[-4:],index=False)
