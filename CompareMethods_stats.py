@@ -13,6 +13,10 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 # 'BasinsComparison_mergeClosed_partTrue']
 # suffix = ['','','_1','']
 
+# datasetFolders =['BasinsComparison1', 'BasinsComparison_obsIntroduced1', 'redistribution_obsIn_outliersRedistributed', \
+# 'BasinsComparison_obsIn_replace']
+# suffix = ['','','_1','']
+
 datasetFolders =['BasinsComparison1', 'BasinsComparison_obsIntroduced1', 'redistribution_obsIn_outliersRedistributed', \
 'redistribution_outliers_mergeClosed_partTrue']
 suffix = ['','','_1','_2']
