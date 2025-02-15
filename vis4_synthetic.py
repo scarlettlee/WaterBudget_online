@@ -11,7 +11,7 @@ from itertools import combinations
 import itertools
 from warnings import simplefilter
 import matplotlib as mpl
-from globVar import compute_stats
+from globVar import compute_stats, getMergedTrue, getUncert
 
 mpl.rcParams['axes.linewidth'] = 1.5 #set the value globally
 simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
@@ -61,10 +61,11 @@ bp0 = sumParam0[1]
 sumParam = getSumSinParams(am0,bp0,-C,c)
 am = sumParam[0]
 bp = sumParam[1]
-print("sum of A and B and C\n",sumParam,am,bp)
+# print("sum of A and B and C\n",sumParam,am,bp)
 
 # True values
-t = np.linspace(0, 32*np.pi, 100)
+month = 60
+t = np.linspace(0, 20*np.pi, month)
 # P = am*sin(w*t+bp) + 3
 # ET = A*sin(w*t+a)  + 3
 # R = B*sin(w*t+b)  + 1
@@ -80,50 +81,51 @@ S = am*sin(w*t+bp) - 1
 np.random.seed(0)
 # 0 is the mean of the normal distribution you are choosing from
 # 1 is the standard deviation of the normal distribution
-# 100 is the number of elements you get in array noise
-noise = np.random.normal(0,1,100)
-P1 = P+noise
-# np.random.seed(2)
-noise = np.random.normal(0,0.2,100)
-P3 = P+noise
-noise = np.random.normal(0,0.3,100)
-P4 = P+noise
-noise = np.random.normal(0,0.4,100)
-P5 = P+noise
+# month is the number of elements you get in array noise
+noise = np.random.normal(0,1,month)
+P1 = P+np.clip(noise, -0.5, None)+1
+noise = np.random.normal(0,1.5,month)
+P2 = P+np.clip(noise, -0.5, None)+2
+noise = np.random.normal(0,2,month)
+P3 = P+np.clip(noise, -0.5, None)+3
+noise = np.random.normal(0,2.5,month)
+P4 = P+np.clip(noise, -0.5, None)+3
 np.random.seed(6)
-noise = np.random.normal(0,0.1,100)
-P2 = P+noise
+noise = np.random.normal(0,2.5,month)
+P5 = P+np.clip(noise, -0.5, None)
 # # Artificial system error
 # P2[58] = 20
 
 np.random.seed(1)
-noise = np.random.normal(0,0.1,100)
-ET1 = ET+noise
-noise = np.random.normal(0,0.2,100)
-ET2 = ET+noise
-noise = np.random.normal(0,0.3,100)
-ET3 = ET+noise
+noise = np.random.normal(0,1.5,month)
+ET1 = ET+np.clip(noise, -0.5, None)
+noise = np.random.normal(0,2,month)
+ET2 = ET+np.clip(noise, -0.5, None)
+noise = np.random.normal(0,2.5,month)
+ET3 = ET+np.clip(noise, -0.5, None)
 
 np.random.seed(2)
-noise = np.random.normal(0,0.3,100)
-R1 = R+noise
-noise = np.random.normal(0,0.2,100)
-R2 = R+noise
-noise = np.random.normal(0,0.1,100)
-R3 = R+noise
+noise = np.random.normal(0,0.3,month)
+R1 = R+np.clip(noise, -0.5, None)
+noise = np.random.normal(0,0.2,month)
+R2 = R+np.clip(noise, -0.5, None)
+noise = np.random.normal(0,0.1,month)
+R3 = R+np.clip(noise, -0.5, None)
 
 np.random.seed(3)
-noise = np.random.normal(0,0.2,100)
+noise = np.random.normal(0,1,month)
 S1 = S+noise
-noise = np.random.normal(0,0.3,100)
+np.random.seed(4)
+noise = np.random.normal(0,1,month)
 S2 = S+noise
-noise = np.random.normal(0,0.4,100)
+np.random.seed(5)
+noise = np.random.normal(0,1,month)
 S3 = S+noise
 
-noise1 = np.random.normal(0,0.1,100)
-noise2 = np.random.normal(0,0.2,100)
-noise3 = np.random.normal(0,0.3,100)
-noise4 = np.random.normal(0,0.4,100)
+noise1 = np.random.normal(0,1,month)
+noise2 = np.random.normal(0,1.5,month)
+noise3 = np.random.normal(0,2,month)
+noise4 = np.random.normal(0,2.5,month)
 
 ##### sine visualization ################################################################
 # fig = figure(1)
@@ -165,28 +167,30 @@ noise4 = np.random.normal(0,0.4,100)
 # plt.plot(t,P1,'--',label ='P4', alpha=.6)
 # plt.plot(t,P1,'--',label ='P5', alpha=.6)
 
-plt.plot(t,P,label ='P')
-plt.plot(t,ET,label ='ET')
-plt.plot(t,R,label ='R')
-plt.plot(t,S,label ='TWSC')
+# plt.plot(t,P,label ='P')
+# plt.plot(t,ET,label ='ET')
+# plt.plot(t,R,label ='R')
+# plt.plot(t,S,label ='TWSC')
 
-plt.plot(t,noise1,'--',label ='ns 0.1')
-plt.plot(t,noise2,'--',label ='ns 0.2')
-plt.plot(t,noise3,'--',label ='ns 0.3')
-plt.plot(t,noise4,'--',label ='ns 0.4')
+# plt.plot(t,noise1,'--',label ='ns 1')
+# plt.plot(t,noise2,'--',label ='ns 2')
+# plt.plot(t,noise3,'--',label ='ns 3')
+# plt.plot(t,noise4,'--',label ='ns 4')
 
-plt.plot(t,P-ET-R-S,label = r'$\Delta Res$', linewidth=2)
+# plt.plot(t,P-ET-R-S,label = r'$\Delta Res$', linewidth=2)
 
-plt.xlabel('month')
-plt.ylabel('value')
-# plt.legend(loc='lower right', bbox_to_anchor=(0,0))
-plt.legend(framealpha=1)
-plt.show()
+# plt.xlabel('month')
+# plt.ylabel('value')
+# # plt.legend(loc='lower right', bbox_to_anchor=(0,0))
+# plt.legend(framealpha=1)
+# plt.show()
 
 ###### validation ###############################################################################################
 # universal variables and functions
-introObs = True
-test = True
+introObs = False
+solveNegative = False
+tolerance = 0.15
+test = False
 dict ={
 'P1':P1,
 'P2':P2,
@@ -210,17 +214,46 @@ dict ={
 data = pd.DataFrame(dict)
 # print(data)
 
+# # visualize P
+# plt.plot(t,P,label ='P')
+# plt.plot(t,P1,'--',label ='P1', alpha=.6)
+# plt.plot(t,P2,'--',label ='P2', alpha=.6)
+# plt.plot(t,P3,'--',label ='P3', alpha=.6)
+# plt.plot(t,P4,'--',label ='P4', alpha=.6)
+# plt.plot(t,P5,'--',label ='P5', alpha=.6)
+
+# # visualize ET
+# plt.plot(t,ET,label ='ET')
+# plt.plot(t,ET1,'--',label ='ET1', alpha=.6)
+# plt.plot(t,ET2,'--',label ='ET2', alpha=.6)
+# plt.plot(t,ET3,'--',label ='ET3', alpha=.6)
+
+# # visualize R    
+# plt.plot(t,R,label ='R')
+# plt.plot(t,R1,'--',label ='R1', alpha=.6)
+# plt.plot(t,R2,'--',label ='R2', alpha=.6)
+# plt.plot(t,R3,'--',label ='R3', alpha=.6)
+
+# # visualize S
+# plt.plot(t,S,label ='TWSC')
+# plt.plot(t,S1,'--',label ='S1', alpha=.6)
+# plt.plot(t,S2,'--',label ='S2', alpha=.6)
+# plt.plot(t,S3,'--',label ='S3', alpha=.6)
+
+# plt.show()
+
 if test:
     data = data.head(6)
 else:
     data = data
 
+#################################################################################
 # columns and combination
 col = data.columns
 # stat
 df_stat = pd.Series()
 lab = ['P', 'E', 'R', 'S']
-met = ['PR', 'CKF', 'MCL', 'MSD']
+met = ['CKF']#['PR', 'CKF', 'MCL', 'MSD']
 statistics = ['PBIAS','CC','RMSE','ME','ME1','MAE','MAPE']
 outputDir = os.path.join(os.path.dirname(__file__), '', 'tmp/')
 # data.to_csv(outputDir+'oriData.csv')
@@ -232,43 +265,6 @@ def getNumOrder(m):
 
     e = [i[1] for i in filtered]
     return e
-
-# compute merged true values
-def getMergedTrue(arr):
-    m = arr.mean()
-    sig = arr - m
-    t = np.power(sig, -2, dtype=float)
-    s = t.sum()
-    w = t / s
-    return (arr * w).sum()
-# def getMergedTrue(arr):
-#     m = arr.mean()
-#     return m
-
-# compute stats
-def computePBIAS(trueValues, correctedValues):
-    return 100*((trueValues-correctedValues).sum())/trueValues.abs().sum()
-
-def computeCC(trueValues, correctedValues):
-    return trueValues.corr(correctedValues)
-
-def computeCCinv(trueValues, correctedValues):
-    return 1-trueValues.corr(correctedValues)
-
-def computeRMSE(trueValues, correctedValues):
-    return ((trueValues - correctedValues) ** 2).mean() ** .5
-
-def computeME(trueValues, correctedValues):
-    return (trueValues-correctedValues).mean()
-
-def computeME1(trueValues, correctedValues):
-    return (trueValues-correctedValues.mean()).abs().mean()
-
-def computeMAE(trueValues, correctedValues):
-    return (trueValues-correctedValues).abs().mean()
-
-def computeMAPE(trueValues, correctedValues):
-    return 100*((trueValues-correctedValues)/trueValues).abs().mean()
 
 # generate coefficient matrix for MCL
 # 1/(2*(n-1)C2) * theta_jk
@@ -398,25 +394,25 @@ print('MCL_distances\n',MCL_distances)
 first = True
 for index, row in data.iterrows():
     print("------------In row: "+str(index)+"------------------------------------------------")
-    ######## PR #############################################################################################
-    # compute corrected values: PR_####_P/E/R/S
-    # lab = ['P', 'E', 'R', 'S']
-    # met = ['PR', 'CKF', 'MCL', 'MSD']
-    for combin in Combinations: # combination numbers ####
-        # get observations
-        params = []  # values of the combination P,E,R,S
-        for i in [0, 1, 2, 3]:
-            params.append(data[lab[i] + combin[i]][index])
+    # ######## PR #############################################################################################
+    # # compute corrected values: PR_####_P/E/R/S
+    # # lab = ['P', 'E', 'R', 'S']
+    # # met = ['PR', 'CKF', 'MCL', 'MSD']
+    # for combin in Combinations: # combination numbers ####
+    #     # get observations
+    #     params = []  # values of the combination P,E,R,S
+    #     for i in [0, 1, 2, 3]:
+    #         params.append(data[lab[i] + combin[i]][index])
 
-        residential = params[0] - params[1] - params[2] - params[3]
-        # compute weights w and PR corrected values        
-        for i in [0, 1, 2, 3]:
-            w = abs(params[i]) / sum([abs(ele) for ele in params])
+    #     residential = params[0] - params[1] - params[2] - params[3]
+    #     # compute weights w and PR corrected values        
+    #     for i in [0, 1, 2, 3]:
+    #         w = abs(params[i]) / sum([abs(ele) for ele in params])
 
-            data['PR_' + combin + '_' + lab[i] + '_w'][index] = w
-            if i == 0:
-                w = -w
-            data['PR_' + combin + '_' + lab[i]][index] = data[lab[i] + combin[i]][index] + residential * w
+    #         data['PR_' + combin + '_' + lab[i] + '_w'][index] = w
+    #         if i == 0:
+    #             w = -w
+    #         data['PR_' + combin + '_' + lab[i]][index] = data[lab[i] + combin[i]][index] + residential * w
 
     ######## CKF #############################################################################################
     # compute corrected values: CKF_####_P/E/R/S
@@ -441,74 +437,106 @@ for index, row in data.iterrows():
                 w = -w
             data['CKF_' + combin + '_' + lab[i]][index] = data[lab[i] + combin[i]][index] + residential * w
 
-    ######## MCL #############################################################################################
-    # compute corrected values: MCL_####_P/E/R/S
-    # lab = ['P', 'E', 'R', 'S']
-    # met = ['PR', 'CKF', 'MCL', 'MSD']
-    for combin in Combinations: # combination numbers #### 2114
-        # get observations
-        d = []       # distances of the Combinations ####: [PES]_d#t
-        params = []  # values of the combination P,E,R,S
-        for i in [0, 1, 2, 3]:
-            dis = MCL_distances[lab[i] + combin[i]]
-            d.append(dis)
+        # iter_res = 0
+        # iter_flag = False
+        # residential = params[0] - params[1] - params[2] - params[3]
+        # # compute weights w and CKF corrected values        
+        # for i in [0, 1, 2, 3]:
+        #     w = d[i] / sum(d)
 
-            params.append(data[lab[i] + combin[i]][index])
+        #     data['CKF_' + combin + '_' + lab[i] + '_w'][index] = w
+        #     if i == 0:
+        #         w = -w
+        #     data['CKF_' + combin + '_' + lab[i]][index] = data[lab[i] + combin[i]][index] + residential * w
+        #     data['CKF_' + combin + '_' + lab[i]+'_r'][index] = residential * w
 
-        residential = params[0] - params[1] - params[2] - params[3]
-        # compute weights w and MCL corrected values        
-        for i in [0, 1, 2, 3]:
-            w = d[i] / sum(d)
+        #     # if precipitation exceed the tolerence
+        #     # set the precipitation to observation                
+        #     if i == 0 and getUncert(data['P'][index],data['CKF_' + combin + '_P'][index]) > tolerance:
+        #         iter_res =  data['CKF_' + combin + '_P'][index] - data['P'][index]
+        #         data['CKF_' + combin + '_P'][index] = data['P'][index]
+        #         data['CKF_' + combin + '_P_r'][index] = 0
+        #         data['CKF_' + combin + '_P_w'][index] = 0  
 
-            data['MCL_' + combin + '_' + lab[i] + '_w'][index] = w
-            if i == 0:
-                w = -w
-            data['MCL_' + combin + '_' + lab[i]][index] = data[lab[i] + combin[i]][index] + residential * w
+        #         iter_flag = True
+        
+        # # redistribute the new residence
+        # if iter_flag:
+        #     newParams = d[1:]
+        #     newSum = sum([abs(ele) for ele in newParams])
+        #     for i in [1,2,3]:
+        #         w = abs(d[i]) / newSum
+        #         data['CKF_' + combin + '_' + lab[i] + '_w'][index] = w
+        #         data['CKF_' + combin + '_' + lab[i]][index] = data['CKF_' + combin + '_' + lab[i]][index] - iter_res * w
+        #         data['CKF_' + combin + '_' + lab[i]+'_r'][index] = data['CKF_' + combin + '_' + lab[i]+'_r'][index] - iter_res * w
+                
+    # ######## MCL #############################################################################################
+    # # compute corrected values: MCL_####_P/E/R/S
+    # # lab = ['P', 'E', 'R', 'S']
+    # # met = ['PR', 'CKF', 'MCL', 'MSD']
+    # for combin in Combinations: # combination numbers #### 2114
+    #     # get observations
+    #     d = []       # distances of the Combinations ####: [PES]_d#t
+    #     params = []  # values of the combination P,E,R,S
+    #     for i in [0, 1, 2, 3]:
+    #         dis = MCL_distances[lab[i] + combin[i]]
+    #         d.append(dis)
 
-    ######## MSD #############################################################################################
-    # distances of all observations
-    Ds = []
-    # compute D: P/E/R/S#_D
-    for rsName in colFiltered:
-        x = data[rsName]  # P1 remote sensing observations
-        y = data[rsName[0]]  # P  true values
+    #         params.append(data[lab[i] + combin[i]][index])
 
-        if not first:
-            y_true = y[0:(index + 1)]
-            y_true_mean = y_true.mean()
-            y_rs = x[0:(index + 1)]
-            y_rs_mean = y_rs.mean()
+    #     residential = params[0] - params[1] - params[2] - params[3]
+    #     # compute weights w and MCL corrected values        
+    #     for i in [0, 1, 2, 3]:
+    #         w = d[i] / sum(d)
 
-            # compute distance
-            data[rsName + '_D'][index] = -(((y_true - y_true_mean) * (y_rs - y_rs_mean)).sum()) ** 2 / (
-                        (y_rs - y_rs_mean) ** 2).sum() + ((y_true - y_true_mean) ** 2).sum()
+    #         data['MCL_' + combin + '_' + lab[i] + '_w'][index] = w
+    #         if i == 0:
+    #             w = -w
+    #         data['MCL_' + combin + '_' + lab[i]][index] = data[lab[i] + combin[i]][index] + residential * w
 
-        Ds.append(data[rsName + '_D'][index])
+    # ######## MSD #############################################################################################
+    # # distances of all observations
+    # Ds = []
+    # # compute D: P/E/R/S#_D
+    # for rsName in colFiltered:
+    #     x = data[rsName]  # P1 remote sensing observations
+    #     y = data[rsName[0]]  # P  true values
+
+    #     if not first:
+    #         y_true = y[0:(index + 1)]
+    #         y_true_mean = y_true.mean()
+    #         y_rs = x[0:(index + 1)]
+    #         y_rs_mean = y_rs.mean()
+
+    #         # compute distance
+    #         data[rsName + '_D'][index] = -(((y_true - y_true_mean) * (y_rs - y_rs_mean)).sum()) ** 2 / (
+    #                     (y_rs - y_rs_mean) ** 2).sum() + ((y_true - y_true_mean) ** 2).sum()
+
+    #     Ds.append(data[rsName + '_D'][index])
     
-    # compute w and corrected values: MSD_P/E/R/S_w, MSD_####_P/E/R/S
-    for combin in Combinations:
-        # get distances
-        d = []       # distances of the combination
-        params = []  # values of the combination P,E,R,S
-        for i in [0, 1, 2, 3]:
-            d.append(data[lab[i] + combin[i] + '_D'][index])
-            params.append(data[lab[i] + combin[i]][index])
+    # # compute w and corrected values: MSD_P/E/R/S_w, MSD_####_P/E/R/S
+    # for combin in Combinations:
+    #     # get distances
+    #     d = []       # distances of the combination
+    #     params = []  # values of the combination P,E,R,S
+    #     for i in [0, 1, 2, 3]:
+    #         d.append(data[lab[i] + combin[i] + '_D'][index])
+    #         params.append(data[lab[i] + combin[i]][index])
 
-        residential = params[0] - params[1] - params[2] - params[3]
-        # compute weights w and MSD corrected values
-        for i in [0, 1, 2, 3]:
-            if first:
-                w = abs(params[i]) / sum([abs(ele) for ele in params])
-            else:
-                w = d[i] / sum(d)
+    #     residential = params[0] - params[1] - params[2] - params[3]
+    #     # compute weights w and MSD corrected values
+    #     for i in [0, 1, 2, 3]:
+    #         if first:
+    #             w = abs(params[i]) / sum([abs(ele) for ele in params])
+    #         else:
+    #             w = d[i] / sum(d)
 
-            data['MSD_' + combin + '_' + lab[i] + '_w'][index] = w
-            if i == 0:
-                w = -w
-            data['MSD_' + combin + '_' + lab[i]][index] = data[lab[i] + combin[i]][index] + residential * w
-
-    first = False
-print('Computed BCC adjusted water budget:',data)
+    #         data['MSD_' + combin + '_' + lab[i] + '_w'][index] = w
+    #         if i == 0:
+    #             w = -w
+    #         data['MSD_' + combin + '_' + lab[i]][index] = data[lab[i] + combin[i]][index] + residential * w
+    # first = False
+# print('Computed BCC adjusted water budget:',data.shape,data.columns)
 
 # print('################ Saved BCC to csv #######################################')
 # if introObs:
@@ -517,6 +545,69 @@ print('Computed BCC adjusted water budget:',data)
 #     data.to_csv(outputDir+'data_bcc.csv')
 
 # ##### validate with true values ################################################################
+df_statsAll = pd.DataFrame(columns=['index', 'method', 'PBIAS', 'CC', 'RMSE', 'ME', 'ME1', 'MAE', 'MAPE'])
+for component in ['P', 'E', 'R', 'S']:
+    required_columns = [col for col in data.columns if col.endswith('_'+component)]
+    # print percentage of negative values
+    negative_count = (data[required_columns] < 0).sum().sum()
+    # Total number of elements in the filtered columns
+    total_count = data[required_columns].size
+    # Calculate the percentage of negative values
+    negative_percentage = (negative_count / total_count) * 100
+    print(f"{component} Percentage of negative values: {negative_percentage:.2f}%")
+
+    # DataFrame to store statistics
+    df_stats = pd.DataFrame(columns=['Combination', 'PBIAS', 'CC', 'RMSE', 'ME', 'ME1', 'MAE', 'MAPE'])
+
+    # Compute statistics for each column pair
+    for csv_column in required_columns:
+        pbias, cc, rmse, me, me1, mae, mape = compute_stats(data[component+'_closed'], data[csv_column])
+
+        # Append statistics to DataFrame
+        new_row = pd.DataFrame([{'Combination': csv_column, 'PBIAS': pbias, 'CC': cc, 
+                    'RMSE': rmse, 'ME': me, 'ME1': me1, 'MAE': mae, 'MAPE': mape}])
+        df_stats = pd.concat([df_stats,new_row],ignore_index=True) 
+
+    # output integrated results        
+    unique_start_chars = set(col.split('_')[0] for col in required_columns)
+    # print(unique_start_chars)
+    unique_start_chars = list(unique_start_chars)
+    # print(unique_start_chars)
+    for method in unique_start_chars:
+        target_rows = [row for row in df_stats.Combination if row.startswith(method+'_')]
+        pbias, cc, rmse, me, me1, mae, mape = df_stats[df_stats.Combination.isin(target_rows)][['PBIAS', 'CC', 'RMSE', 'ME', 'ME1', 'MAE', 'MAPE']].mean()
+
+        new_row = pd.DataFrame([{'index':component, 'method': method, 'PBIAS': pbias, 'CC': cc, 
+                        'RMSE': rmse, 'ME': me, 'ME1': me1, 'MAE': mae, 'MAPE': mape}])
+        df_statsAll = pd.concat([df_statsAll,new_row],ignore_index=True)
+
+# 筛选出method为CKF的项
+filtered_df = df_statsAll[df_statsAll['method'] == 'CKF']
+# 按index和method分组并计算每个分组的统计指标
+grouped_stats = filtered_df.groupby(['index', 'method'])[['PBIAS','CC','RMSE','ME','ME1','MAE','MAPE']].mean()
+# 将结果转换为字符串并输出
+print(grouped_stats.to_string(index=True, header=True))
+
+# visualize CKF_5311_P/E/R/S with true values P/E/R/S_closed
+for component in ['P', 'E', 'R', 'S']:
+    plt.plot(t,data[component+'_closed'],label = 'true')
+    plt.plot(t,data['CKF_4311_'+component],'--',label = component, alpha=.6)
+
+    plt.xlabel('month')
+    plt.ylabel('value')
+    plt.legend(framealpha=1)
+plt.show()
+
+
+
+
+
+
+
+
+
+
+###################################################################################################
 # # Compute pbias, cc, rse, me, mae, mape for remotesensing PERS, method_P/E/R/S_####_bias/cc/rse
 # individualStat = pd.Series()
 # # Traverse stats

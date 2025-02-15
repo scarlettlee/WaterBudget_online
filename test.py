@@ -1,19 +1,37 @@
-import pandas as pd
+# visualize the synthetic data
+import numpy as np
+import matplotlib.pyplot as plt
 
-s1 = pd.Series(['a', 'b'])
-s2 = pd.Series(['c', 'd'])
-s = pd.DataFrame([s1])
-print(s)
-s = pd.DataFrame([s1.T])
-print(s)
+# Generate noise samples
+noise = np.random.normal(0, 1, 100)
 
-c = pd.concat([s1, s2])
-d = pd.concat([s1, s2], ignore_index=True)
-print(c)
-print(d)
+# Set your desired upper limit
+upper_limit = 2  # example upper limit
 
-e = pd.concat([s, s1, s2])
-print(e)
+# Clip the noise to the upper limit
+noise_clipped = np.clip(noise, None, upper_limit)
+
+# Plot the clipped noise
+plt.plot(noise)
+plt.plot(noise_clipped)
+plt.show()
+
+# import pandas as pd
+
+# s1 = pd.Series(['a', 'b'])
+# s2 = pd.Series(['c', 'd'])
+# s = pd.DataFrame([s1])
+# print(s)
+# s = pd.DataFrame([s1.T])
+# print(s)
+
+# c = pd.concat([s1, s2])
+# d = pd.concat([s1, s2], ignore_index=True)
+# print(c)
+# print(d)
+
+# e = pd.concat([s, s1, s2])
+# print(e)
 
 
 # # Example DataFrame
