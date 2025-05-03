@@ -12,7 +12,7 @@ simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
 # pd.set_option('display.max_rows', None)
 pd.options.mode.chained_assignment = None
 
-test = False
+test = True
 csv_folder = os.path.join(os.path.dirname(__file__), '', '')
 if basin3Flag:
     # read observed precipitation    
@@ -49,7 +49,7 @@ for fl in fileList:
     # df is existing data for validating if BCC functions are right
     # data is used for computing BCC corrected water budget components
     if test:
-        data = pd.read_csv(fl).head(6)
+        data = pd.read_csv(fl)#.head(6)
         # print('data\n',data)
     else:
         data = pd.read_csv(fl) 
@@ -362,6 +362,6 @@ for fl in fileList:
 
     # save data
     if test:
-        data.to_csv(output_dir+get_file_name(fl)+'_bccTest.csv',index=False)
+        data.to_csv(output_dir+get_file_name(fl)+'_bcc.csv',index=False)
     else:
         data.to_csv(output_dir+get_file_name(fl)+'_bcc'+fl[-4:],index=False)

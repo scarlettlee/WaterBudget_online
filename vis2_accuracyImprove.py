@@ -10,7 +10,8 @@ from globVar import basin3Flag, find_pattern, get_file_name, compute_stats
 # Define paths and folders
 csv_folder = os.path.join(os.path.dirname(__file__), '', '')
 if basin3Flag:  
-    csv_files = find_pattern("*.csv", csv_folder+'3redistribution_outliers_mergeClosed_partTrue/')
+    # csv_files = find_pattern("*.csv", csv_folder+'3redistribution_outliers_mergeClosed_partTrue/')
+    csv_files = find_pattern("*.csv", csv_folder+'3BasinsComparison1/')
 else:
     csv_files = find_pattern("*.csv", csv_folder+'28redistribution_outliers_mergeClosed_partTrue/')
 
@@ -23,13 +24,13 @@ for csv_file in csv_files:
     file_name = get_file_name(csv_file).split('_')[0]
     print("-------------------------------------Processing file:", file_name)
 
-    # Read CSV data
-    data = pd.read_csv(csv_file)
+    # Read CSV data and neglect first three rows since MSD is not stable for the first three rows
+    data = pd.read_csv(csv_file).iloc[3:]
     data.replace([np.inf, -np.inf], np.nan, inplace=True)    
     columns =data.columns
     # print(len(columns))
 
-    # matchPR_####_P_r1
+    # match PR_####_P_r1
     r = re.compile(r".*_\d{4}_[P|E|R|S](?:_[12])?$") 
     filtered = list(filter(r.match, columns))
     # print("Filtered columns:", len(filtered))
@@ -82,24 +83,24 @@ for i, component in enumerate(components):  # Iterate over each component
         # Filter data for the specific abnormal value and component
         subset = csv_data[(csv_data['component'] == component) & (csv_data['abnormal'] == abnormal)]
 
-        # # Create scatter plot
-        # sns.scatterplot(
-        #     data=subset,
-        #     x='value',  # The "value" column represents the observed data
-        #     y=f'{component}_closed', 
-        #     # hue='basin', 
-        #     hue='method', 
-        #     ax=ax
-        # )
-        # Create heat scatter plot
-        sns.histplot(
+        # Create scatter plot
+        sns.scatterplot(
             data=subset,
             x='value',  # The "value" column represents the observed data
             y=f'{component}_closed', 
-            hue='basin', 
-            # hue='method', 
+            # hue='basin', 
+            hue='method', 
             ax=ax
         )
+        # # Create heat scatter plot
+        # sns.histplot(
+        #     data=subset,
+        #     x='value',  # The "value" column represents the observed data
+        #     y=f'{component}_closed', 
+        #     hue='basin', 
+        #     # hue='method', 
+        #     ax=ax
+        # )
         # # Create heat scatter plot using kdeplot
         # sns.kdeplot(
         #     data=subset,
@@ -138,6 +139,8 @@ for i, component in enumerate(components):  # Iterate over each component
         
         ax.set_xlabel("")  # Label for x-axis indicating observed values
         ax.set_ylabel(f"{component}_closed")
+        # no legend
+        ax.get_legend().remove()
 
 # Adjust layout
 plt.tight_layout()

@@ -39,14 +39,14 @@ for index, dataset in enumerate(datasetFolders):
             csv_files = [csv_folder+'3'+dataset+'/4127800.csv']    
             # csv_files = [csv_folder+'3'+dataset+'/6742900.csv']    
         
-        refDataFolder = '3BasinsComparison_mergeClosed_partTrue'
+        refDataFolder = '3redistribution_outliers_mergeClosed_partTrue'
     else:
         csv_files = find_pattern("*.csv", csv_folder+'28'+dataset+'/')
         if test:
             csv_files = [csv_folder+'28'+dataset+'/2181900.csv']    
             # csv_files = [csv_folder+'28'+dataset+'/4127800.csv']  
 
-        refDataFolder = '28BasinsComparison_mergeClosed_partTrue'
+        refDataFolder = '28redistribution_outliers_mergeClosed_partTrue'
 
     # Iterate through CSV files: each basin
     for csv_file in csv_files:
@@ -55,7 +55,7 @@ for index, dataset in enumerate(datasetFolders):
 
         # Read reference data
         # P_closed	R_closed	E_closed	S_closed
-        ref_data = pd.read_csv(os.path.join(csv_folder, refDataFolder, file_name+'_bcc.csv'))
+        ref_data = pd.read_csv(os.path.join(csv_folder, refDataFolder, file_name+'.csv'))
         ref_data.replace([np.inf, -np.inf], np.nan, inplace=True)
         # only keep columns with '_closed'
         ref_data = ref_data[[col for col in ref_data.columns if col.endswith('_closed')]]

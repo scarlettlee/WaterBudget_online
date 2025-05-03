@@ -53,7 +53,7 @@ def sign(x):
     return 0
 
 # overlyadjusted 
-overAdjustPerc = 0.5
+overAdjustPerc = 1000
 def compute_newR1(row, l, col): # E_P# and PR_####_P_r
     a = row[l] 
     b = row[col]    

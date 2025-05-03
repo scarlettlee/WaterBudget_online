@@ -30,7 +30,7 @@ else:
     pth = os.path.join(os.path.dirname(__file__), '', '28data_basin/')
     output_dir = os.path.join(os.path.dirname(__file__), '', '28BasinsComparison_obsIn_replace/')
 
-tolerance = 0.15
+tolerance = 0.05
 if test:
     # pattern = '6742900.csv'
     # pattern = '1147010.csv'
@@ -50,7 +50,8 @@ for fl in fileList:
     # df is existing data for validating if BCC functions are right
     # data is used for computing BCC corrected water budget components
     if test:
-        data = pd.read_csv(fl)#.head(6)
+        # get rows from 9 to 15
+        data = pd.read_csv(fl)#, skiprows=range(1, 9), nrows=7)#.head(14)
         # print('data\n',data)
     else:
         data = pd.read_csv(fl) 
@@ -115,7 +116,8 @@ for fl in fileList:
     for m in lab:
         data[m] = -9999.0    
         # compute closed value
-        data[m+'_closed'] = -9999.0
+        data[m+'_closed'] = np.nan
+        data['flag'] = np.nan
         # update: replace merged P with observations 
         if m == 'P':
             data['P'] = excel_data[fileName]
@@ -160,26 +162,70 @@ for fl in fileList:
 
         data['R'][index] = data['R1'][index]
         # Error limit for R
-        data['E_R1'][index] = data['R1'][index]*0.07
+        data['E_R1'][index] = data['R1'][index]*0.07    
 
         # compute closed value
-        data['P_closed'][index] = data['P'][index]
-        data['R_closed'][index] = data['R'][index]
-        data['E_closed'][index] = data['E'][index]
-        data['S_closed'][index] = data['S'][index]
-        tempE = data['P_closed'][index] - data['R_closed'][index] - data['S_closed'][index]
-        if tempE > 0:
-            data['E_closed'][index] = tempE
+        # all p/E/R/S values are none null 
+        if pd.notna(data['P'][index]) and pd.notna(data['E'][index]) and pd.notna(data['R'][index]) and pd.notna(data['S'][index]):
+            data['P_closed'][index] = data['P'][index]
+            data['R_closed'][index] = data['R'][index]
+            data['E_closed'][index] = data['P'][index] - data['R'][index] - data['S'][index]
+            if data['E_closed'][index] < 0:
+                data['flag'][index] = -1
+            else:
+                data['flag'][index] = 1
+            data['S_closed'][index] = data['S'][index]   
+        else:
+            data['flag'][index] = 0
+    # print('with true values', data[['P', 'E', 'S']])
+
+    # update ture values: P/E/R/S_closed
+    # for tempE less than 0, interpolate all P/E/R/S_closed with neighboring months
+    for index, row in data.iterrows():       
+        if data['flag'][index] < 0:
+            prev_valid_value = next_valid_value = None
+            prev_valid_index = next_valid_index = None
+
+            for i in range(index - 1, -1, -1):
+                if data['flag'][i] > 0:
+                    prev_valid_value = [data['P_closed'][i], data['R_closed'][i], data['E_closed'][i], data['S_closed'][i]]
+                    prev_valid_index = i
+                    break
+
+            for i in range(index + 1, len(data)):
+                if data['flag'][i] > 0:
+                    next_valid_value = [data['P_closed'][i], data['R_closed'][i], data['E_closed'][i], data['S_closed'][i]] 
+                    next_valid_index = i
+                    break
+
+             # Interpolate if possible
+            if prev_valid_value is not None and next_valid_value is not None:
+                # Calculate proportion and interpolate linearly
+                proportion = (index - prev_valid_index) / (next_valid_index - prev_valid_index)                
+                data["P_closed"][index] = prev_valid_value[0] + proportion * (next_valid_value[0] - prev_valid_value[0])
+                data["R_closed"][index] = prev_valid_value[1] + proportion * (next_valid_value[1] - prev_valid_value[1])
+                data["E_closed"][index] = prev_valid_value[2] + proportion * (next_valid_value[2] - prev_valid_value[2])
+                data["S_closed"][index] = prev_valid_value[3] + proportion * (next_valid_value[3] - prev_valid_value[3])
+            elif prev_valid_value is not None:
+                data['P_closed'][index] = prev_valid_value[0]
+                data['R_closed'][index] = prev_valid_value[1]
+                data['E_closed'][index] = prev_valid_value[2]
+                data['S_closed'][index] = prev_valid_value[3]
+            elif next_valid_value is not None:
+                data['P_closed'][index] = next_valid_value[0]
+                data['R_closed'][index] = next_valid_value[1]
+                data['E_closed'][index] = next_valid_value[2]
+                data['S_closed'][index] = next_valid_value[3]
+
+        ####################################
+        # update error limit according to true values E_P/E/R/S#
+        # ##################################
         for m in ['P','E', 'S']:
-            # raw
             r = re.compile(m + "[12345](?!\d)$")  # code : 12345
             filtered = list(filter(r.match, col))
-            ####################################
-            # update error limit according to true values E_P/E/R/S#
-            # ##################################
+            
             for column in filtered:
                 data['E_'+column][index] = abs(data[column][index]-data[m+'_closed'][index])
-    # print('with true values', data[['P', 'E', 'S']])
 
     # Construct dictionary for  [PES]_d#t 
     # e.g. P has 5 distances, one for each product, i.e. P_d[1-5]t
@@ -216,50 +262,50 @@ for fl in fileList:
     # iterate rows to compute D, w, and corrected values
     first = True
     for index, row in data.iterrows():
-        # print("------------In row: "+str(index)+"------------------------------------------------")
-        ######## PR #############################################################################################
-        # compute corrected values: PR_####_P/E/R/S
-        # lab = ['P', 'E', 'R', 'S']
-        # met = ['PR', 'CKF', 'MCL', 'MSD']
-        # print("------------In PR------------------------------------------------")
-        for combin in Combinations: # combination numbers ####
-            # get observations
-            params = []  # values of the combination P,E,R,S
-            for i in [0, 1, 2, 3]:
-                params.append(data[lab[i] + combin[i]][index])
+        # # print("------------In row: "+str(index)+"------------------------------------------------")
+        # ######## PR #############################################################################################
+        # # compute corrected values: PR_####_P/E/R/S
+        # # lab = ['P', 'E', 'R', 'S']
+        # # met = ['PR', 'CKF', 'MCL', 'MSD']
+        # # print("------------In PR------------------------------------------------")
+        # for combin in Combinations: # combination numbers ####
+        #     # get observations
+        #     params = []  # values of the combination P,E,R,S
+        #     for i in [0, 1, 2, 3]:
+        #         params.append(data[lab[i] + combin[i]][index])
 
-            iter_res = 0
-            iter_flag = False
-            residential = params[0] - params[1] - params[2] - params[3]
-            # compute weights w and PR corrected values        
-            for i in [0, 1, 2, 3]:
-                w = abs(params[i]) / sum([abs(ele) for ele in params])
+        #     iter_res = 0
+        #     iter_flag = False
+        #     residential = params[0] - params[1] - params[2] - params[3]
+        #     # compute weights w and PR corrected values        
+        #     for i in [0, 1, 2, 3]:
+        #         w = abs(params[i]) / sum([abs(ele) for ele in params])
 
-                data['PR_' + combin + '_' + lab[i] + '_w'][index] = w
-                if i == 0:
-                    w = -w
-                data['PR_' + combin + '_' + lab[i]][index] = data[lab[i] + combin[i]][index] + residential * w
-                data['PR_' + combin + '_' + lab[i]+'_r'][index] = residential * w
+        #         data['PR_' + combin + '_' + lab[i] + '_w'][index] = w
+        #         if i == 0:
+        #             w = -w
+        #         data['PR_' + combin + '_' + lab[i]][index] = data[lab[i] + combin[i]][index] + residential * w
+        #         data['PR_' + combin + '_' + lab[i]+'_r'][index] = residential * w
 
-                # if precipitation exceed the tolerence
-                # set the precipitation to observation                
-                if i == 0 and getUncert(data['P'][index],data['PR_' + combin + '_P'][index]) > tolerance:
-                    iter_res =  data['PR_' + combin + '_P'][index] - data['P'][index]
-                    data['PR_' + combin + '_P'][index] = data['P'][index]
-                    data['PR_' + combin + '_P_r'][index] = 0
-                    data['PR_' + combin + '_P_w'][index] = 0  
+        #         # if precipitation exceed the tolerence
+        #         # set the precipitation to observation                
+        #         if i == 0 and getUncert(data['P'][index],data['PR_' + combin + '_P'][index]) > tolerance:
+        #             iter_res =  data['PR_' + combin + '_P'][index] - data['P'][index]
+        #             data['PR_' + combin + '_P'][index] = data['P'][index]
+        #             data['PR_' + combin + '_P_r'][index] = 0
+        #             data['PR_' + combin + '_P_w'][index] = 0  
 
-                    iter_flag = True
+        #             iter_flag = True
             
-            # redistribute the new residence
-            if iter_flag:
-                newParams = params[1:]
-                newSum = sum([abs(ele) for ele in newParams])
-                for i in [1,2,3]:
-                    w = abs(params[i]) / newSum 
-                    data['PR_' + combin + '_' + lab[i] + '_w'][index] = w  
-                    data['PR_' + combin + '_' + lab[i]][index] = data['PR_' + combin + '_' + lab[i]][index] - iter_res * w   
-                    data['PR_' + combin + '_' + lab[i]+'_r'][index] = data['PR_' + combin + '_' + lab[i]+'_r'][index] - iter_res * w  
+        #     # redistribute the new residence
+        #     if iter_flag:
+        #         newParams = params[1:]
+        #         newSum = sum([abs(ele) for ele in newParams])
+        #         for i in [1,2,3]:
+        #             w = abs(params[i]) / newSum 
+        #             data['PR_' + combin + '_' + lab[i] + '_w'][index] = w  
+        #             data['PR_' + combin + '_' + lab[i]][index] = data['PR_' + combin + '_' + lab[i]][index] - iter_res * w   
+        #             data['PR_' + combin + '_' + lab[i]+'_r'][index] = data['PR_' + combin + '_' + lab[i]+'_r'][index] - iter_res * w  
 
         ######## CKF #############################################################################################
         # compute corrected values: CKF_####_P/E/R/S
@@ -295,9 +341,9 @@ for fl in fileList:
 
                 # if precipitation exceed the tolerence
                 # set the precipitation to observation                
-                if i == 0 and getUncert(data['P'][index],data['CKF_' + combin + '_P'][index]) > tolerance:
-                    iter_res =  data['CKF_' + combin + '_P'][index] - data['P'][index]
-                    data['CKF_' + combin + '_P'][index] = data['P'][index]
+                if i == 0 and getUncert(data['P_closed'][index],data['CKF_' + combin + '_P'][index]) > tolerance:
+                    iter_res =  data['CKF_' + combin + '_P'][index] - data['P_closed'][index]
+                    data['CKF_' + combin + '_P'][index] = data['P_closed'][index]
                     data['CKF_' + combin + '_P_r'][index] = 0
                     data['CKF_' + combin + '_P_w'][index] = 0  
 
@@ -313,133 +359,136 @@ for fl in fileList:
                     data['CKF_' + combin + '_' + lab[i]][index] = data['CKF_' + combin + '_' + lab[i]][index] - iter_res * w
                     data['CKF_' + combin + '_' + lab[i]+'_r'][index] = data['CKF_' + combin + '_' + lab[i]+'_r'][index] - iter_res * w
 
-        ######## MCL #############################################################################################
-        # compute corrected values: MCL_####_P/E/R/S
-        # lab = ['P', 'E', 'R', 'S']
-        # met = ['PR', 'CKF', 'MCL', 'MSD']
-        for combin in Combinations: # combination numbers #### 2114
-            # get observations
-            d = []       # distances of the Combinations ####: [PES]_d#t
-            params = []  # values of the combination P,E,R,S
-            for i in [0, 1, 2, 3]:
-                if i != 2:
-                    dis = MCL_distances[lab[i] + combin[i]]
-                else:
-                    param = getUncertCoefR(data['R1'],index)
-                    dis = data['R1'][index] * param
-                d.append(dis)
+        # ######## MCL #############################################################################################
+        # # compute corrected values: MCL_####_P/E/R/S
+        # # lab = ['P', 'E', 'R', 'S']
+        # # met = ['PR', 'CKF', 'MCL', 'MSD']
+        # for combin in Combinations: # combination numbers #### 2114
+        #     # get observations
+        #     d = []       # distances of the Combinations ####: [PES]_d#t
+        #     params = []  # values of the combination P,E,R,S
+        #     for i in [0, 1, 2, 3]:
+        #         if i != 2:
+        #             dis = MCL_distances[lab[i] + combin[i]]
+        #         else:
+        #             param = getUncertCoefR(data['R1'],index)
+        #             dis = data['R1'][index] * param
+        #         d.append(dis)
 
-                params.append(data[lab[i] + combin[i]][index])
-            # runoff should have the lowest weight
-            d[2] = np.min(d)
+        #         params.append(data[lab[i] + combin[i]][index])
+        #     # runoff should have the lowest weight
+        #     d[2] = np.min(d)
 
-            iter_res = 0
-            iter_flag = False
-            residential = params[0] - params[1] - params[2] - params[3]
-            # compute weights w and MCL corrected values        
-            for i in [0, 1, 2, 3]:
-                w = d[i] / sum(d)
+        #     iter_res = 0
+        #     iter_flag = False
+        #     residential = params[0] - params[1] - params[2] - params[3]
+        #     # compute weights w and MCL corrected values        
+        #     for i in [0, 1, 2, 3]:
+        #         w = d[i] / sum(d)
 
-                data['MCL_' + combin + '_' + lab[i] + '_w'][index] = w
-                if i == 0:
-                    w = -w
-                data['MCL_' + combin + '_' + lab[i]][index] = data[lab[i] + combin[i]][index] + residential * w
-                data['MCL_' + combin + '_' + lab[i]+'_r'][index] = residential * w
+        #         data['MCL_' + combin + '_' + lab[i] + '_w'][index] = w
+        #         if i == 0:
+        #             w = -w
+        #         data['MCL_' + combin + '_' + lab[i]][index] = data[lab[i] + combin[i]][index] + residential * w
+        #         data['MCL_' + combin + '_' + lab[i]+'_r'][index] = residential * w
 
-                # if precipitation exceed the tolerence
-                # set the precipitation to observation                
-                if i == 0 and getUncert(data['P'][index],data['MCL_' + combin + '_P'][index]) > tolerance:
-                    iter_res =  data['MCL_' + combin + '_P'][index] - data['P'][index]
-                    data['MCL_' + combin + '_P'][index] = data['P'][index]
-                    data['MCL_' + combin + '_P_r'][index] = 0
-                    data['MCL_' + combin + '_P_w'][index] = 0  
+        #         # if precipitation exceed the tolerence
+        #         # set the precipitation to observation                
+        #         if i == 0 and getUncert(data['P'][index],data['MCL_' + combin + '_P'][index]) > tolerance:
+        #             iter_res =  data['MCL_' + combin + '_P'][index] - data['P'][index]
+        #             data['MCL_' + combin + '_P'][index] = data['P'][index]
+        #             data['MCL_' + combin + '_P_r'][index] = 0
+        #             data['MCL_' + combin + '_P_w'][index] = 0  
 
-                    iter_flag = True
+        #             iter_flag = True
             
-            # redistribute the new residence
-            if iter_flag:
-                newParams = d[1:]
-                newSum = sum([abs(ele) for ele in newParams])
-                for i in [1,2,3]:
-                    w = abs(d[i]) / newSum
-                    data['MCL_' + combin + '_' + lab[i] + '_w'][index] = w
-                    data['MCL_' + combin + '_' + lab[i]][index] = data['MCL_' + combin + '_' + lab[i]][index] - iter_res * w
-                    data['MCL_' + combin + '_' + lab[i]+'_r'][index] = data['MCL_' + combin + '_' + lab[i]+'_r'][index] - iter_res * w
+        #     # redistribute the new residence
+        #     if iter_flag:
+        #         newParams = d[1:]
+        #         newSum = sum([abs(ele) for ele in newParams])
+        #         for i in [1,2,3]:
+        #             w = abs(d[i]) / newSum
+        #             data['MCL_' + combin + '_' + lab[i] + '_w'][index] = w
+        #             data['MCL_' + combin + '_' + lab[i]][index] = data['MCL_' + combin + '_' + lab[i]][index] - iter_res * w
+        #             data['MCL_' + combin + '_' + lab[i]+'_r'][index] = data['MCL_' + combin + '_' + lab[i]+'_r'][index] - iter_res * w
 
-        ######## MSD #############################################################################################
-        # distances of all observations
-        Ds = []
-        # compute D: P/E/R/S#_D
-        for rsName in colFiltered:
-            x = data[rsName]  # P1 remote sensing observations
-            y = data[rsName[0]]  # P  true values
+        # ######## MSD #############################################################################################
+        # # distances of all observations
+        # Ds = []
+        # # compute D: P/E/R/S#_D
+        # for rsName in colFiltered:
+        #     x = data[rsName]  # P1 remote sensing observations
+        #     y = data[rsName[0]]  # P  true values
 
-            if rsName[0] != 'R':
-                # P E S
-                if not first:
-                    y_true = y[0:(index + 1)]
-                    y_true_mean = y_true.mean()
-                    y_rs = x[0:(index + 1)]
-                    y_rs_mean = y_rs.mean()
+        #     if rsName[0] != 'R':
+        #         # P E S
+        #         if not first:
+        #             y_true = y[0:(index + 1)]
+        #             y_true_mean = y_true.mean()
+        #             y_rs = x[0:(index + 1)]
+        #             y_rs_mean = y_rs.mean()
 
-                    # compute distance
-                    data[rsName + '_D'][index] = -(((y_true - y_true_mean) * (y_rs - y_rs_mean)).sum()) ** 2 / (
-                                (y_rs - y_rs_mean) ** 2).sum() + ((y_true - y_true_mean) ** 2).sum()
-            else: # runoff
-                param = getUncertCoefR(x,index)
-                data['R1_D'][index] = y[index] * param
+        #             # compute distance
+        #             data[rsName + '_D'][index] = -(((y_true - y_true_mean) * (y_rs - y_rs_mean)).sum()) ** 2 / (
+        #                         (y_rs - y_rs_mean) ** 2).sum() + ((y_true - y_true_mean) ** 2).sum()
+        #     else: # runoff
+        #         param = getUncertCoefR(x,index)
+        #         data['R1_D'][index] = y[index] * param
 
-            Ds.append(data[rsName + '_D'][index])
+        #     Ds.append(data[rsName + '_D'][index])
 
-        # The uncertainty of R is always the lowest
-        data['R1_D'][index] = min(Ds)
+        # # The uncertainty of R is always the lowest
+        # data['R1_D'][index] = min(Ds)
         
-        # compute w and corrected values: MSD_P/E/R/S_w, MSD_####_P/E/R/S
-        for combin in Combinations:
-            # get distances
-            d = []       # distances of the combination
-            params = []  # values of the combination P,E,R,S
-            for i in [0, 1, 2, 3]:
-                d.append(data[lab[i] + combin[i] + '_D'][index])
-                params.append(data[lab[i] + combin[i]][index])
+        # # compute w and corrected values: MSD_P/E/R/S_w, MSD_####_P/E/R/S
+        # for combin in Combinations:
+        #     # get distances
+        #     d = []       # distances of the combination
+        #     params = []  # values of the combination P,E,R,S
+        #     for i in [0, 1, 2, 3]:
+        #         d.append(data[lab[i] + combin[i] + '_D'][index])
+        #         params.append(data[lab[i] + combin[i]][index])
 
-            iter_res = 0
-            iter_flag = False
-            residential = params[0] - params[1] - params[2] - params[3]
-            # compute weights w and MSD corrected values
-            for i in [0, 1, 2, 3]:
-                if first:
-                    w = abs(params[i]) / sum([abs(ele) for ele in params])
-                else:
-                    w = d[i] / sum(d)
+        #     iter_res = 0
+        #     iter_flag = False
+        #     residential = params[0] - params[1] - params[2] - params[3]
+        #     # compute weights w and MSD corrected values
+        #     for i in [0, 1, 2, 3]:
+        #         if first:
+        #             w = abs(params[i]) / sum([abs(ele) for ele in params])
+        #         else:
+        #             w = d[i] / sum(d)
                 
-                data['MSD_' + combin + '_' + lab[i] + '_w'][index] = w
-                if i == 0:
-                    w = -w
-                data['MSD_' + combin + '_' + lab[i]][index] = data[lab[i] + combin[i]][index] + residential * w
-                data['MSD_' + combin + '_' + lab[i]+'_r'][index] = residential * w
+        #         data['MSD_' + combin + '_' + lab[i] + '_w'][index] = w
+        #         if i == 0:
+        #             w = -w
+        #         data['MSD_' + combin + '_' + lab[i]][index] = data[lab[i] + combin[i]][index] + residential * w
+        #         data['MSD_' + combin + '_' + lab[i]+'_r'][index] = residential * w
 
-                # if precipitation exceed the tolerence
-                # set the precipitation to observation                
-                if i == 0 and getUncert(data['P'][index],data['MSD_' + combin + '_P'][index]) > tolerance:
-                    iter_res =  data['MSD_' + combin + '_P'][index] - data['P'][index]
-                    data['MSD_' + combin + '_P'][index] = data['P'][index]
-                    data['MSD_' + combin + '_P_r'][index] = 0
-                    data['MSD_' + combin + '_P_w'][index] = 0  
+        #         # if precipitation exceed the tolerence
+        #         # set the precipitation to observation                
+        #         if i == 0 and getUncert(data['P'][index],data['MSD_' + combin + '_P'][index]) > tolerance:
+        #             iter_res =  data['MSD_' + combin + '_P'][index] - data['P'][index]
+        #             data['MSD_' + combin + '_P'][index] = data['P'][index]
+        #             data['MSD_' + combin + '_P_r'][index] = 0
+        #             data['MSD_' + combin + '_P_w'][index] = 0  
 
-                    iter_flag = True
+        #             iter_flag = True
             
-            # redistribute the new residence
-            if iter_flag:
-                newParams = d[1:]
-                newSum = sum([abs(ele) for ele in newParams])
-                for i in [1,2,3]:
-                    w = abs(d[i]) / newSum
-                    data['MSD_' + combin + '_' + lab[i] + '_w'][index] = w 
-                    data['MSD_' + combin + '_' + lab[i]][index] = data['MSD_' + combin + '_' + lab[i]][index] - iter_res * w
-                    data['MSD_' + combin + '_' + lab[i]+'_r'][index] = data['MSD_' + combin + '_' + lab[i]+'_r'][index] - iter_res * w
+        #     # redistribute the new residence
+        #     if iter_flag:
+        #         newParams = d[1:]
+        #         newSum = sum([abs(ele) for ele in newParams])
+        #         for i in [1,2,3]:
+        #             w = abs(d[i]) / newSum
+        #             data['MSD_' + combin + '_' + lab[i] + '_w'][index] = w 
+        #             data['MSD_' + combin + '_' + lab[i]][index] = data['MSD_' + combin + '_' + lab[i]][index] - iter_res * w
+        #             data['MSD_' + combin + '_' + lab[i]+'_r'][index] = data['MSD_' + combin + '_' + lab[i]+'_r'][index] - iter_res * w
 
         first = False
+
+
+
 
         # # test 
         # testParam = '3111_P'

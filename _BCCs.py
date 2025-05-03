@@ -12,7 +12,7 @@ simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
 # pd.set_option('display.max_rows', None)
 pd.options.mode.chained_assignment = None
 
-test = False
+test = True
 # # # 3 test basins 
 # pth = os.path.join(os.path.dirname(__file__), '', 'dataTWSC_test/')
 # output_dir = os.path.join(os.path.dirname(__file__), '', 'output_test/')
@@ -29,7 +29,8 @@ else:
 if test:
     # pattern = '6742900.csv'
     # pattern = '1147010.csv'
-    pattern = '1147010_test.csv'
+    # pattern = '1147010_test.csv'
+    pattern = '4127800.csv'
 else:
     pattern = "*.csv"
 fileList = find_pattern(pattern, pth)
@@ -352,8 +353,8 @@ for fl in fileList:
     # colFiltered = list(filter(r.match, data.columns))
     # data = data.drop(colFiltered, axis=1)
 
-    # save data
+    # save dataTest
     if test:
-        data.to_csv(output_dir+get_file_name(fl)+'_bccTest.csv',index=False)
+        data.to_csv(output_dir+get_file_name(fl)+'_bcc.csv',index=False)
     else:
         data.to_csv(output_dir+get_file_name(fl)+'_bcc'+fl[-4:],index=False)
