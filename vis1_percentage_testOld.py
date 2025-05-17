@@ -14,8 +14,8 @@ path = os.path.join(os.path.dirname(__file__), '', '')
 # filePath = path+"28BasinsComparison - output/"
 
 # Original BCC without introduce observations
-filePath = path+"3BasinsComparison1/"
-# filePath = path+"28BasinsComparison/"
+# filePath = path+"3BasinsComparison1/"
+filePath = path+"28BasinsComparison1/"
 # # Observations introduced without redistribute residual
 # filePath = path+"3BasinsComparison_obsIntroduced/"
 

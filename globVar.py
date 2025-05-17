@@ -5,7 +5,7 @@ import pandas as pd
 from itertools import combinations
 from math import comb
 
-basin3Flag= False
+basin3Flag= True
 strategy = "mergeAsRef"
 
 # match a pattern:
